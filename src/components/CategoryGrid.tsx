@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
@@ -105,41 +104,40 @@ const categories = [
 
 const CategoryGrid = () => {
   return (
-    <section className="py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+    <section className="py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
             Explore AI Automation Categories
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Discover intelligent automations across every business function. From customer support to financial processing, find the perfect solution for your needs.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {categories.map((category, index) => {
             const Icon = category.icon;
             return (
               <Card 
                 key={category.name}
-                className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-gray-200 hover:border-gray-300 hover:-translate-y-1"
+                className="group hover:shadow-xl transition-all duration-300 cursor-pointer border border-border hover:border-primary/40 hover:-translate-y-1 bg-white/90 backdrop-blur rounded-2xl smooth-motion"
               >
-                <CardContent className="p-6">
-                  <div className="flex flex-col items-start space-y-4">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${category.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className="w-6 h-6 text-white" />
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-start space-y-6">
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${category.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md`}>
+                      <Icon className="w-7 h-7 text-white" />
                     </div>
-                    
                     <div className="flex-1 w-full">
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
+                        <h3 className="font-semibold text-gray-900 group-hover:text-primary transition-colors text-lg">
                           {category.name}
                         </h3>
-                        <span className="text-sm font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                        <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                           {category.count}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 leading-relaxed">
+                      <p className="text-base text-gray-600 leading-relaxed">
                         {category.description}
                       </p>
                     </div>
@@ -150,8 +148,8 @@ const CategoryGrid = () => {
           })}
         </div>
 
-        <div className="text-center mt-12">
-          <button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg">
+        <div className="text-center mt-16">
+          <button className="bg-gradient-to-r from-primary to-indigo-500 hover:from-blue-700 hover:to-indigo-700 text-white px-10 py-4 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 hover:shadow-xl smooth-motion">
             View All Categories
           </button>
         </div>
