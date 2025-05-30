@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -84,11 +85,48 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'scale-in': {
+					'0%': {
+						transform: 'scale(0.95)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'scale(1)',
+						opacity: '1'
+					}
+				},
+				'pulse': {
+					'0%, 100%': {
+						opacity: '1'
+					},
+					'50%': {
+						opacity: '0.5'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'scale-in': 'scale-in 0.2s ease-out',
+				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+			},
+			backgroundImage: {
+				'grid-slate-100': 'linear-gradient(90deg, transparent 24%, rgba(148, 163, 184, 0.1) 25%, rgba(148, 163, 184, 0.1) 26%, transparent 27%, transparent 74%, rgba(148, 163, 184, 0.1) 75%, rgba(148, 163, 184, 0.1) 76%, transparent 77%, transparent), linear-gradient(transparent 24%, rgba(148, 163, 184, 0.1) 25%, rgba(148, 163, 184, 0.1) 26%, transparent 27%, transparent 74%, rgba(148, 163, 184, 0.1) 75%, rgba(148, 163, 184, 0.1) 76%, transparent 77%, transparent)'
+			},
+			backgroundSize: {
+				'grid': '60px 60px'
 			}
 		}
 	},
