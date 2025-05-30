@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Shield, Users, Zap, Award, CheckCircle, TrendingUp } from 'lucide-react';
 
@@ -49,7 +48,7 @@ const TrustIndicators = () => {
   ];
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
@@ -57,8 +56,8 @@ const TrustIndicators = () => {
             const Icon = stat.icon;
             return (
               <div key={index} className="text-center group">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 group-hover:from-blue-200 group-hover:to-indigo-200 transition-colors duration-300 mb-4">
-                  <Icon className="w-8 h-8 text-blue-600" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-200 group-hover:from-yellow-200 group-hover:to-yellow-300 transition-colors duration-300 mb-4">
+                  <Icon className="w-8 h-8 text-primary" />
                 </div>
                 <div className="text-3xl font-bold text-gray-900 mb-1">{stat.number}</div>
                 <div className="text-lg font-semibold text-gray-700 mb-1">{stat.label}</div>
@@ -84,8 +83,8 @@ const TrustIndicators = () => {
               const Icon = feature.icon;
               return (
                 <div key={index} className="text-center group">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 group-hover:from-green-200 group-hover:to-emerald-200 transition-colors duration-300 mb-6">
-                    <Icon className="w-8 h-8 text-green-600" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-200 group-hover:from-yellow-200 group-hover:to-yellow-300 transition-colors duration-300 mb-6">
+                    <Icon className="w-8 h-8 text-primary" />
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-3">
                     {feature.title}

@@ -21,84 +21,84 @@ const categories = [
     icon: MessageSquare,
     count: '1,247',
     description: 'AI chatbots, ticket routing, sentiment analysis',
-    gradient: 'from-blue-500 to-cyan-500'
+    gradient: 'from-yellow-300 to-yellow-500'
   },
   {
     name: 'Email Marketing',
     icon: Mail,
     count: '892',
     description: 'Campaign automation, personalization, analytics',
-    gradient: 'from-purple-500 to-pink-500'
+    gradient: 'from-yellow-400 to-yellow-600'
   },
   {
     name: 'E-commerce',
     icon: ShoppingCart,
     count: '1,053',
     description: 'Inventory management, pricing optimization',
-    gradient: 'from-green-500 to-emerald-500'
+    gradient: 'from-yellow-200 to-yellow-400'
   },
   {
     name: 'Analytics & BI',
     icon: BarChart3,
     count: '734',
     description: 'Data visualization, predictive modeling',
-    gradient: 'from-orange-500 to-red-500'
+    gradient: 'from-yellow-500 to-yellow-700'
   },
   {
     name: 'CRM & Sales',
     icon: Users,
     count: '1,189',
     description: 'Lead scoring, pipeline automation, forecasting',
-    gradient: 'from-indigo-500 to-purple-500'
+    gradient: 'from-yellow-300 to-yellow-500'
   },
   {
     name: 'Document Processing',
     icon: FileText,
     count: '567',
     description: 'OCR, data extraction, workflow automation',
-    gradient: 'from-teal-500 to-blue-500'
+    gradient: 'from-yellow-400 to-yellow-600'
   },
   {
     name: 'Scheduling & Calendar',
     icon: Calendar,
     count: '423',
     description: 'Meeting coordination, resource booking',
-    gradient: 'from-yellow-500 to-orange-500'
+    gradient: 'from-yellow-200 to-yellow-400'
   },
   {
     name: 'Process Automation',
     icon: Zap,
     count: '1,456',
     description: 'Workflow orchestration, task automation',
-    gradient: 'from-pink-500 to-rose-500'
+    gradient: 'from-yellow-500 to-yellow-700'
   },
   {
     name: 'Data Integration',
     icon: Database,
     count: '689',
     description: 'ETL pipelines, API connectors, sync tools',
-    gradient: 'from-slate-500 to-gray-500'
+    gradient: 'from-yellow-300 to-yellow-500'
   },
   {
     name: 'AI Assistants',
     icon: Bot,
     count: '832',
     description: 'Virtual assistants, voice processing',
-    gradient: 'from-violet-500 to-purple-500'
+    gradient: 'from-yellow-400 to-yellow-600'
   },
   {
     name: 'Workflow Management',
     icon: Workflow,
     count: '945',
     description: 'Project automation, team collaboration',
-    gradient: 'from-cyan-500 to-blue-500'
+    gradient: 'from-yellow-200 to-yellow-400'
   },
   {
     name: 'Finance & Payments',
     icon: CreditCard,
     count: '378',
     description: 'Invoice processing, expense automation',
-    gradient: 'from-emerald-500 to-teal-500'
+    gradient: 'from-yellow-500 to-yellow-700'
   }
 ];
 
@@ -107,7 +107,7 @@ const CategoryGrid = () => {
     <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
+          <h2 className="text-4xl font-extrabold text-yellow-900 mb-4 tracking-tight">
             Explore AI Automation Categories
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -149,7 +149,7 @@ const CategoryGrid = () => {
         </div>
 
         <div className="text-center mt-16">
-          <button className="bg-gradient-to-r from-primary to-indigo-500 hover:from-blue-700 hover:to-indigo-700 text-white px-10 py-4 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 hover:shadow-xl smooth-motion">
+          <button className="bg-gradient-to-r from-primary to-yellow-600 hover:from-primary/90 hover:to-yellow-700 text-yellow-900 px-10 py-4 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 hover:shadow-xl smooth-motion">
             View All Categories
           </button>
         </div>

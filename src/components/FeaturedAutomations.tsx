@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -82,10 +81,10 @@ const featuredAutomations = [
 
 const FeaturedAutomations = () => {
   return (
-    <section className="py-16 bg-gradient-to-br from-gray-50 to-blue-50">
+    <section className="py-20 bg-gradient-to-br from-white to-yellow-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-extrabold text-yellow-900 mb-4 tracking-tight">
             Featured AI Automations
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -97,10 +96,10 @@ const FeaturedAutomations = () => {
           {featuredAutomations.map((automation) => (
             <Card 
               key={automation.id}
-              className="group hover:shadow-2xl transition-all duration-300 cursor-pointer border-gray-200 hover:border-gray-300 bg-white"
+              className="group hover:shadow-2xl transition-all duration-300 cursor-pointer border border-primary/20 hover:border-primary/40 bg-white/90 backdrop-blur rounded-2xl smooth-motion"
             >
-              <CardContent className="p-6">
-                <div className="flex flex-col space-y-4">
+              <CardContent className="p-8">
+                <div className="flex flex-col space-y-6">
                   {/* Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -112,13 +111,13 @@ const FeaturedAutomations = () => {
                           variant={automation.badge === 'Editor\'s Choice' ? 'default' : 'secondary'}
                           className={`${
                             automation.badge === 'Editor\'s Choice' 
-                              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' 
+                              ? 'bg-gradient-to-r from-yellow-500 to-yellow-700 text-white' 
                               : automation.badge === 'Trending'
-                              ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
+                              ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white'
                               : automation.badge === 'Enterprise'
-                              ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white'
-                              : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
-                          }`}
+                              ? 'bg-gradient-to-r from-yellow-600 to-yellow-800 text-white'
+                              : 'bg-gradient-to-r from-yellow-300 to-yellow-500 text-white'
+                          } shadow-md`}
                         >
                           {automation.badge}
                         </Badge>
@@ -153,11 +152,11 @@ const FeaturedAutomations = () => {
                   </div>
 
                   {/* Metrics */}
-                  <div className="grid grid-cols-3 gap-4 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg">
+                  <div className="grid grid-cols-3 gap-4 p-6 bg-gradient-to-r from-yellow-50 to-white rounded-xl shadow-inner">
                     {Object.entries(automation.metrics).map(([key, value]) => (
                       <div key={key} className="text-center">
-                        <div className="text-lg font-bold text-gray-900">{value}</div>
-                        <div className="text-xs text-gray-500 capitalize">
+                        <div className="text-lg font-bold text-yellow-900">{value}</div>
+                        <div className="text-xs text-gray-600 capitalize">
                           {key.replace(/([A-Z])/g, ' $1').trim()}
                         </div>
                       </div>
@@ -178,7 +177,7 @@ const FeaturedAutomations = () => {
                       </Button>
                       <Button 
                         size="sm" 
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                        className="bg-gradient-to-r from-primary to-yellow-600 hover:from-primary/90 hover:to-yellow-700 text-yellow-900 shadow-lg hover:shadow-xl smooth-motion"
                       >
                         <Zap className="w-4 h-4 mr-1" />
                         Try Now
@@ -191,11 +190,11 @@ const FeaturedAutomations = () => {
           ))}
         </div>
 
-        <div className="text-center">
+        <div className="text-center mt-16">
           <Button 
             size="lg"
             variant="outline" 
-            className="border-gray-300 hover:border-gray-400 px-8 py-3"
+            className="border border-primary/40 hover:border-primary/60 px-10 py-4 text-yellow-900 font-semibold text-lg smooth-motion shadow-md hover:shadow-lg"
           >
             <TrendingUp className="w-5 h-5 mr-2" />
             View All Featured Automations
