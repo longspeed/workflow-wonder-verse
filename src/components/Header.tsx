@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Search, Menu, X, User, Bell, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,9 +15,11 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                AutomateAI
-              </h1>
+              <Link to="/">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  AutomateAI
+                </h1>
+              </Link>
             </div>
           </div>
 
@@ -37,9 +40,11 @@ const Header = () => {
             <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
               Browse
             </Button>
-            <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
-              Sell
-            </Button>
+            <Link to="/sell">
+              <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
+                Sell
+              </Button>
+            </Link>
             <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
               Integrations
             </Button>
@@ -89,9 +94,11 @@ const Header = () => {
               <Button variant="ghost" className="justify-start text-gray-600 hover:text-gray-900">
                 Browse
               </Button>
-              <Button variant="ghost" className="justify-start text-gray-600 hover:text-gray-900">
-                Sell
-              </Button>
+              <Link to="/sell">
+                <Button variant="ghost" className="justify-start text-gray-600 hover:text-gray-900 w-full">
+                  Sell
+                </Button>
+              </Link>
               <Button variant="ghost" className="justify-start text-gray-600 hover:text-gray-900">
                 Integrations
               </Button>
