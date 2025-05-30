@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '@/components/Header';
 import SellHero from '@/components/sell/SellHero';
@@ -9,7 +8,7 @@ import Footer from '@/components/Footer';
 
 const Sell = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white font-luxury">
       <Header />
       <main>
         <SellHero />
