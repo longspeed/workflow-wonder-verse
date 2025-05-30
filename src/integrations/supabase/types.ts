@@ -9,7 +9,111 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      products: {
+        Row: {
+          category: string
+          created_at: string
+          currency: string | null
+          demo_url: string | null
+          description: string | null
+          documentation_url: string | null
+          download_count: number | null
+          featured: boolean | null
+          id: string
+          image_urls: string[] | null
+          price: number
+          rating: number | null
+          seller_id: string
+          status: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          currency?: string | null
+          demo_url?: string | null
+          description?: string | null
+          documentation_url?: string | null
+          download_count?: number | null
+          featured?: boolean | null
+          id?: string
+          image_urls?: string[] | null
+          price: number
+          rating?: number | null
+          seller_id: string
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          currency?: string | null
+          demo_url?: string | null
+          description?: string | null
+          documentation_url?: string | null
+          download_count?: number | null
+          featured?: boolean | null
+          id?: string
+          image_urls?: string[] | null
+          price?: number
+          rating?: number | null
+          seller_id?: string
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          company: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          is_seller: boolean | null
+          location: string | null
+          seller_verified: boolean | null
+          updated_at: string
+          username: string | null
+          website: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          is_seller?: boolean | null
+          location?: string | null
+          seller_verified?: boolean | null
+          updated_at?: string
+          username?: string | null
+          website?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_seller?: boolean | null
+          location?: string | null
+          seller_verified?: boolean | null
+          updated_at?: string
+          username?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
