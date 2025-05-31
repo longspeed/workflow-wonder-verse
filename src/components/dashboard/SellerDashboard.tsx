@@ -1,12 +1,13 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DollarSign, Zap, Star, MessageSquare, Plus, Edit, Users, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import AddAutomationModal from './AddAutomationModal';
 
 const SellerDashboard = () => {
   const { user } = useAuth();
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const stats = [
     {
@@ -84,7 +85,10 @@ const SellerDashboard = () => {
             <CardTitle className="text-yellow-900">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button className="w-full justify-start bg-yellow-500 hover:bg-yellow-600 text-yellow-900">
+            <Button 
+              className="w-full justify-start bg-yellow-500 hover:bg-yellow-600 text-yellow-900"
+              onClick={() => setShowAddModal(true)}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add New Automation
             </Button>
@@ -176,6 +180,16 @@ const SellerDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Add Automation Modal */}
+      <AddAutomationModal 
+        open={showAddModal} 
+        onOpenChange={setShowAddModal}
+        onSuccess={() => {
+          // You can add logic here to refresh the dashboard data
+          console.log('New automation added successfully!');
+        }}
+      />
     </div>
   );
 };
