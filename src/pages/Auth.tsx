@@ -24,7 +24,7 @@ const Auth = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [user, navigate]);
 
@@ -40,6 +40,8 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      const redirectUrl = `${window.location.origin}/dashboard`;
+      
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -47,6 +49,7 @@ const Auth = () => {
           data: {
             full_name: formData.fullName,
           },
+          emailRedirectTo: redirectUrl,
         },
       });
 
@@ -94,7 +97,7 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
       toast({
@@ -108,25 +111,25 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-yellow-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-white border-yellow-200">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Welcome to AutomateAI</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-yellow-900">Welcome to AutomateAI</CardTitle>
+          <CardDescription className="text-yellow-700">
             Join the leading marketplace for AI automation tools
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-yellow-100">
+              <TabsTrigger value="signin" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-yellow-900">Sign In</TabsTrigger>
+              <TabsTrigger value="signup" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-yellow-900">Sign Up</TabsTrigger>
             </TabsList>
             
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="signin-email" className="text-yellow-900">Email</Label>
                   <Input
                     id="signin-email"
                     name="email"
@@ -135,10 +138,11 @@ const Auth = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
+                    className="border-yellow-300 focus:border-yellow-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <Label htmlFor="signin-password" className="text-yellow-900">Password</Label>
                   <Input
                     id="signin-password"
                     name="password"
@@ -147,9 +151,10 @@ const Auth = () => {
                     value={formData.password}
                     onChange={handleInputChange}
                     required
+                    className="border-yellow-300 focus:border-yellow-500"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-yellow-900" disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -165,7 +170,7 @@ const Auth = () => {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Label htmlFor="signup-name" className="text-yellow-900">Full Name</Label>
                   <Input
                     id="signup-name"
                     name="fullName"
@@ -174,10 +179,11 @@ const Auth = () => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     required
+                    className="border-yellow-300 focus:border-yellow-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email" className="text-yellow-900">Email</Label>
                   <Input
                     id="signup-email"
                     name="email"
@@ -186,10 +192,11 @@ const Auth = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
+                    className="border-yellow-300 focus:border-yellow-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password" className="text-yellow-900">Password</Label>
                   <Input
                     id="signup-password"
                     name="password"
@@ -198,9 +205,10 @@ const Auth = () => {
                     value={formData.password}
                     onChange={handleInputChange}
                     required
+                    className="border-yellow-300 focus:border-yellow-500"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-yellow-900" disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

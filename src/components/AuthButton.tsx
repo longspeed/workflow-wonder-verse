@@ -25,7 +25,7 @@ const AuthButton = () => {
     return (
       <Button 
         onClick={() => navigate('/auth')}
-        className="bg-blue-600 hover:bg-blue-700 text-white"
+        className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900"
       >
         Sign In
       </Button>
@@ -35,19 +35,19 @@ const AuthButton = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
+        <Button variant="outline" className="flex items-center gap-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50">
           <User className="h-4 w-4" />
           {user.user_metadata?.full_name || user.email}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="bg-white border-yellow-200">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate('/sell')}>
-          Sell Products
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate('/dashboard')}>
           Dashboard
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/sell')}>
+          Sell Products
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut} className="text-red-600">
