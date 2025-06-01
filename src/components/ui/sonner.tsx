@@ -1,8 +1,8 @@
 
-import { Toaster as SonnerPrimitive } from "sonner"
+import { toast } from "sonner"
 
 export function Toaster() {
   return (
-    <SonnerPrimitive closeButton />
+    <div />
   )
 }

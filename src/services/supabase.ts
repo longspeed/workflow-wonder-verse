@@ -220,7 +220,7 @@ export const storageService = {
   async listFiles(bucket: string, path?: string) {
     const { data, error } = await supabase.storage
       .from(bucket)
-      .list(path || '', {}, { signal: new AbortController().signal });
+      .list(path || '');
 
     if (error) throw error;
     return data;
