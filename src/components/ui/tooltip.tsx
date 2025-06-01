@@ -1,5 +1,22 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, createContext, useContext } from 'react';
 import { cn } from '@/lib/utils';
+
+interface TooltipContextType {
+  delay: number;
+}
+
+const TooltipContext = createContext<TooltipContextType>({ delay: 200 });
+
+export const TooltipProvider: React.FC<{ children: React.ReactNode; delay?: number }> = ({
+  children,
+  delay = 200,
+}) => {
+  return (
+    <TooltipContext.Provider value={{ delay }}>
+      {children}
+    </TooltipContext.Provider>
+  );
+};
 
 interface TooltipProps {
   content: React.ReactNode;
@@ -15,9 +32,10 @@ export const Tooltip: React.FC<TooltipProps> = ({
   children,
   side = 'top',
   align = 'center',
-  delay = 200,
+  delay,
   className,
 }) => {
+  const context = useContext(TooltipContext);
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -71,7 +89,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
     timeout = setTimeout(() => {
       setIsVisible(true);
       updatePosition();
-    }, delay);
+    }, delay ?? context.delay);
   };
 
   const hideTooltip = () => {

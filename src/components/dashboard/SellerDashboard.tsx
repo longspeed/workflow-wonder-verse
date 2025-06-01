@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DollarSign, Zap, Star, MessageSquare, Plus, Edit, Users, TrendingUp, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useAccountData } from '@/hooks/useAccountData';
+import { useSellerData } from '@/hooks/useSellerData';
 import AddAutomationModal from './AddAutomationModal';
 import { toast } from '@/components/ui/use-toast';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -16,7 +16,7 @@ type Product = Database['public']['Tables']['products']['Row'] & {
 
 const SellerDashboard = () => {
   const { user } = useAuth();
-  const { profile, products, loading, error, refreshData } = useAccountData();
+  const { profile, products, loading, error, refresh } = useSellerData();
   const [showAddModal, setShowAddModal] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
@@ -24,7 +24,7 @@ const SellerDashboard = () => {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        await refreshData();
+        await refresh();
         setLastUpdate(new Date());
       } catch (error) {
         console.error('Auto-refresh failed:', error);
@@ -32,11 +32,11 @@ const SellerDashboard = () => {
     }, 5 * 60 * 1000); // 5 minutes
 
     return () => clearInterval(interval);
-  }, [refreshData]);
+  }, [refresh]);
 
   const handleRefresh = async () => {
     try {
-      await refreshData();
+      await refresh();
       setLastUpdate(new Date());
       toast({
         title: "Data refreshed",
@@ -45,6 +45,23 @@ const SellerDashboard = () => {
     } catch (error) {
       toast({
         title: "Refresh failed",
+        description: "Failed to refresh dashboard data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddSuccess = async () => {
+    try {
+      await refresh();
+      setLastUpdate(new Date());
+      toast({
+        title: "Success",
+        description: "Your automation has been added successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
         description: "Failed to refresh dashboard data. Please try again.",
         variant: "destructive",
       });
@@ -199,9 +216,11 @@ const SellerDashboard = () => {
         </Button>
       </div>
 
+      {/* Add Automation Modal */}
       <AddAutomationModal
         open={showAddModal}
         onOpenChange={setShowAddModal}
+        onSuccess={handleAddSuccess}
       />
     </div>
   );

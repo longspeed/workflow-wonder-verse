@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -136,12 +135,22 @@ const AddAutomationModal = ({ open, onOpenChange, onSuccess }: AddAutomationModa
         tags: formData.tags,
         demo_url: formData.demo_url || null,
         documentation_url: formData.documentation_url || null,
-        status: isDraft ? 'draft' : 'published'
+        status: isDraft ? 'draft' : 'published',
+        features: formData.features,
+        requirements: formData.requirements,
+        pricing_model: formData.pricing_model,
+        difficulty_level: formData.difficulty_level,
+        rating: 0,
+        download_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('products')
-        .insert([productData]);
+        .insert([productData])
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -152,6 +161,7 @@ const AddAutomationModal = ({ open, onOpenChange, onSuccess }: AddAutomationModa
           : "Your automation is now live on the marketplace.",
       });
 
+      // Call onSuccess callback to trigger refresh
       onSuccess?.();
       onOpenChange(false);
       

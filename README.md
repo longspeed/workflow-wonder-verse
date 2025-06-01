@@ -1,38 +1,25 @@
 # Workflow Wonder Verse
 
-A modern workflow automation platform with real-time capabilities, advanced caching, and robust error handling.
+A modern marketplace for AI automation tools built with Next.js, Supabase, and Tailwind CSS.
 
 ## Features
 
-- 🚀 Real-time data synchronization
-- 🔄 Advanced caching system
-- 🛡️ Robust error handling
-- 📦 Batch processing
-- 🔁 Automatic retry mechanism
-- 🎯 Optimistic updates
-- 📱 Responsive design
-- 🎨 Modern UI with animations
+- 🔐 Authentication with Supabase Auth
+- 🛍️ Marketplace for AI automations
+- 👤 User roles (Buyer, Seller, Admin)
+- 💰 Secure payment processing
+- ⭐ Favorites and reviews system
+- 📊 Dashboard for users and sellers
+- 🎨 Modern UI with Tailwind CSS
 
 ## Tech Stack
 
-- **Frontend**: React, TypeScript, Tailwind CSS
-- **Backend**: Supabase
-- **State Management**: React Hooks
-- **Styling**: Tailwind CSS, CSS Modules
-- **Animations**: Framer Motion, CSS Animations
-- **Error Handling**: Custom error classification
-- **Caching**: In-memory caching with TTL
-- **Real-time**: WebSocket subscriptions
+- **Frontend**: Next.js 14, React, TypeScript
+- **Styling**: Tailwind CSS, shadcn/ui
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **Testing**: Jest, React Testing Library
 
 ## Getting Started
-
-### Prerequisites
-
-- Node.js 16.x or later
-- npm or yarn
-- Supabase account
-
-### Installation
 
 1. Clone the repository:
 ```bash
@@ -43,59 +30,41 @@ cd workflow-wonder-verse
 2. Install dependencies:
 ```bash
 npm install
-# or
-yarn install
 ```
 
-3. Create a `.env.local` file in the root directory:
+3. Set up environment variables:
+Create a `.env.local` file with the following variables:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-4. Start the development server:
+4. Run the development server:
 ```bash
 npm run dev
-# or
-yarn dev
 ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Development
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run test` - Run tests
+- `npm run test:watch` - Run tests in watch mode
 
 ## Project Structure
 
 ```
 src/
-├── components/        # React components
-│   ├── ui/           # UI components
-│   └── dashboard/    # Dashboard components
-├── hooks/            # Custom React hooks
-├── lib/              # Utility functions
-├── styles/           # Global styles
-└── types/            # TypeScript types
+├── app/              # Next.js app directory
+├── components/       # React components
+├── integrations/     # Third-party integrations
+├── lib/             # Utility functions
+└── types/           # TypeScript types
 ```
-
-## Key Features
-
-### Real-time Updates
-- WebSocket-based real-time updates
-- Automatic reconnection handling
-- Optimistic UI updates
-
-### Caching System
-- In-memory caching with TTL
-- Automatic cache invalidation
-- Pattern-based cache clearing
-
-### Error Handling
-- Comprehensive error classification
-- Automatic error recovery
-- User-friendly error messages
-- Toast notifications
-
-### Batch Processing
-- Efficient handling of multiple operations
-- Configurable batch sizes
-- Automatic batch timing
-- Error handling for batches
 
 ## Contributing
 
