@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -77,7 +76,7 @@ const Browse = () => {
         const profilesData = item.profiles;
         return {
           ...item,
-          profiles: profilesData && typeof profilesData === 'object' && 'full_name' in profilesData 
+          profiles: profilesData && typeof profilesData === 'object' && profilesData !== null && 'full_name' in profilesData 
             ? (profilesData as { full_name: string; avatar_url: string })
             : null
         };
