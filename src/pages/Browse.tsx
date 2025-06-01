@@ -72,12 +72,14 @@ const Browse = () => {
       if (error) throw error;
 
       // Type assertion with proper handling
-      const typedData = (data || []).map(item => ({
-        ...item,
-        profiles: item.profiles && typeof item.profiles === 'object' && !('error' in item.profiles) 
-          ? item.profiles as { full_name: string; avatar_url: string }
-          : null
-      })) as Automation[];
+      const typedData = (data || []).map(item => {
+        return {
+          ...item,
+          profiles: item.profiles && typeof item.profiles === 'object' && 'full_name' in item.profiles 
+            ? item.profiles 
+            : null
+        };
+      }) as Automation[];
 
       setAutomations(typedData);
       setFilteredAutomations(typedData);

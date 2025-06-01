@@ -14,6 +14,7 @@ interface UploadOptions {
     quality?: number;
     format?: 'jpeg' | 'png' | 'webp';
   };
+  transform?: (file: File) => Promise<File>;
 }
 
 interface BatchUploadResult {
@@ -49,11 +50,16 @@ export const useFileUpload = () => {
         }
       }
 
+      let uploadedFile = file;
+      if (options?.transform) {
+        uploadedFile = await options.transform(file);
+      }
+
       const path = options.path || `${Date.now()}_${file.name}`;
       const data = await storageService.uploadFile(
         options.bucket,
         path,
-        file,
+        uploadedFile,
         {
           cacheControl: options.cacheControl,
           upsert: options.upsert
@@ -106,11 +112,16 @@ export const useFileUpload = () => {
           }
         }
 
+        let uploadedFile = file;
+        if (options?.transform) {
+          uploadedFile = await options.transform(file);
+        }
+
         const path = options.path || `${Date.now()}_${file.name}`;
         const data = await storageService.uploadFile(
           options.bucket,
           path,
-          file,
+          uploadedFile,
           {
             cacheControl: options.cacheControl,
             upsert: options.upsert
@@ -169,4 +180,4 @@ export const useFileUpload = () => {
     uploadProgress,
     batchProgress
   };
-}; 
+};

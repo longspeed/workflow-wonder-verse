@@ -109,7 +109,7 @@ export const productService = {
 
     // Upload new image
     const imagePath = `products/${Date.now()}_${imageFile.name}`;
-    await storageService.uploadFile('products', imagePath, imageFile);
+    await storageService.uploadFile('products', imagePath, imageFile, { upsert: true });
 
     // Get public URL
     const imageUrl = await storageService.getPublicUrl('products', imagePath);
@@ -266,4 +266,4 @@ export const realtimeService = {
       .on('auth_state_change', callback)
       .subscribe();
   }
-}; 
+};

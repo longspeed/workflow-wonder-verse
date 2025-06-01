@@ -1,207 +1,121 @@
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Star, Download, Eye, TrendingUp, Zap, Shield } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { productService } from '@/services/supabase';
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import AutomationDetailsModal from './browse/AutomationDetailsModal';
+import { useAuth } from '@/hooks/useAuth';
 
-const featuredAutomations = [
-  {
-    id: 1,
-    name: 'Intelligent Customer Support Triager',
-    description: 'AI-powered ticket classification and routing system that reduces response time by 75% using advanced NLP and sentiment analysis.',
-    seller: 'AutoFlow Labs',
-    rating: 4.9,
-    reviews: 1247,
-    downloads: '12.3K',
-    price: '$299/month',
-    tags: ['Customer Support', 'NLP', 'Sentiment Analysis'],
-    image: '/placeholder.svg',
-    badge: 'Editor\'s Choice',
-    metrics: {
-      accuracy: '94%',
-      timeReduction: '75%',
-      satisfaction: '4.8/5'
-    }
-  },
-  {
-    id: 2,
-    name: 'E-commerce Inventory Optimizer',
-    description: 'Machine learning automation that predicts demand, optimizes stock levels, and prevents stockouts across multiple channels.',
-    seller: 'RetailAI Solutions',
-    rating: 4.8,
-    reviews: 892,
-    downloads: '8.7K',
-    price: '$149/month',
-    tags: ['E-commerce', 'Machine Learning', 'Inventory'],
-    image: '/placeholder.svg',
-    badge: 'Trending',
-    metrics: {
-      costSavings: '32%',
-      accuracy: '91%',
-      roi: '340%'
-    }
-  },
-  {
-    id: 3,
-    name: 'Contract Analysis Engine',
-    description: 'Automated contract review and risk assessment using GPT-4 Turbo with legal domain expertise and compliance checking.',
-    seller: 'LegalTech Pro',
-    rating: 4.7,
-    reviews: 567,
-    downloads: '5.2K',
-    price: '$599/month',
-    tags: ['Legal', 'Document Processing', 'Compliance'],
-    image: '/placeholder.svg',
-    badge: 'Enterprise',
-    metrics: {
-      timeReduction: '85%',
-      accuracy: '96%',
-      riskDetection: '89%'
-    }
-  },
-  {
-    id: 4,
-    name: 'Social Media Content Generator',
-    description: 'Multi-platform content creation automation with brand voice learning, hashtag optimization, and performance tracking.',
-    seller: 'ContentAI Studio',
-    rating: 4.6,
-    reviews: 1034,
-    downloads: '15.8K',
-    price: '$79/month',
-    tags: ['Marketing', 'Content Creation', 'Social Media'],
-    image: '/placeholder.svg',
-    badge: 'Popular',
-    metrics: {
-      engagement: '+127%',
-      contentVolume: '10x',
-      brandConsistency: '93%'
-    }
-  }
-];
+interface Product {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  rating: number;
+  download_count: number;
+  category: string;
+  tags: string[];
+  image_urls: string[];
+  demo_url: string;
+  documentation_url: string;
+  seller_id: string;
+  status: string;
+  created_at: string;
+  profiles?: {
+    full_name: string;
+    avatar_url: string;
+  } | null;
+}
 
 const FeaturedAutomations = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedAutomation, setSelectedAutomation] = useState<Product | null>(null);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const productsData = await productService.getProducts();
+        setProducts(productsData);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const handlePurchase = (automation: Product) => {
+    if (user) {
+      alert(`Purchasing ${automation.title} for $${automation.price}`);
+    } else {
+      alert('Please log in to purchase');
+    }
+  };
+
   return (
-    <section className="py-20 bg-gradient-to-br from-white to-yellow-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-extrabold text-yellow-900 mb-4 tracking-tight">
-            Featured AI Automations
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Hand-picked automations that are transforming businesses worldwide. Verified performance, enterprise-ready, and trusted by thousands.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {featuredAutomations.map((automation) => (
-            <Card 
-              key={automation.id}
-              className="group hover:shadow-2xl transition-all duration-300 cursor-pointer border border-primary/20 hover:border-primary/40 bg-white/90 backdrop-blur rounded-2xl smooth-motion"
-            >
-              <CardContent className="p-8">
-                <div className="flex flex-col space-y-6">
-                  {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600 transition-colors">
-                          {automation.name}
-                        </h3>
-                        <Badge 
-                          variant={automation.badge === 'Editor\'s Choice' ? 'default' : 'secondary'}
-                          className={`${
-                            automation.badge === 'Editor\'s Choice' 
-                              ? 'bg-gradient-to-r from-yellow-500 to-yellow-700 text-white' 
-                              : automation.badge === 'Trending'
-                              ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white'
-                              : automation.badge === 'Enterprise'
-                              ? 'bg-gradient-to-r from-yellow-600 to-yellow-800 text-white'
-                              : 'bg-gradient-to-r from-yellow-300 to-yellow-500 text-white'
-                          } shadow-md`}
-                        >
-                          {automation.badge}
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-gray-600 mb-3 leading-relaxed">
-                        {automation.description}
-                      </p>
-                      
-                      <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
-                        <span>by {automation.seller}</span>
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="font-medium">{automation.rating}</span>
-                          <span>({automation.reviews})</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Download className="w-4 h-4" />
-                          <span>{automation.downloads}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2">
-                    {automation.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  {/* Metrics */}
-                  <div className="grid grid-cols-3 gap-4 p-6 bg-gradient-to-r from-yellow-50 to-white rounded-xl shadow-inner">
-                    {Object.entries(automation.metrics).map(([key, value]) => (
-                      <div key={key} className="text-center">
-                        <div className="text-lg font-bold text-yellow-900">{value}</div>
-                        <div className="text-xs text-gray-600 capitalize">
-                          {key.replace(/([A-Z])/g, ' $1').trim()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl font-bold text-gray-900">{automation.price}</span>
-                      <span className="text-sm text-gray-500">starting at</span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm" className="hover:bg-gray-50">
-                        <Eye className="w-4 h-4 mr-1" />
-                        Preview
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        className="bg-gradient-to-r from-primary to-yellow-600 hover:from-primary/90 hover:to-yellow-700 text-yellow-900 shadow-lg hover:shadow-xl smooth-motion"
-                      >
-                        <Zap className="w-4 h-4 mr-1" />
-                        Try Now
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="text-center mt-16">
-          <Button 
-            size="lg"
-            variant="outline" 
-            className="border border-primary/40 hover:border-primary/60 px-10 py-4 text-yellow-900 font-semibold text-lg smooth-motion shadow-md hover:shadow-lg"
-          >
-            <TrendingUp className="w-5 h-5 mr-2" />
-            View All Featured Automations
-          </Button>
-        </div>
+    <div className="container py-12">
+      <h2 className="text-3xl font-bold mb-8 text-center">Featured Automations</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {products.map(product => (
+          <Card key={product.id}>
+            <CardHeader>
+              <CardTitle>{product.title}</CardTitle>
+              <CardDescription>{product.description.slice(0, 100)}...</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {product.image_urls && product.image_urls.length > 0 && (
+                <img
+                  src={product.image_urls[0]}
+                  alt={product.title}
+                  className="rounded-md mb-4 w-full h-48 object-cover"
+                />
+              )}
+              <div className="flex flex-wrap gap-2 mb-2">
+                {product.tags?.slice(0, 3).map((tag, index) => (
+                  <Badge key={index} variant="default" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+              <div className="text-2xl font-semibold">
+                {product.price === 0 ? 'Free' : `$${product.price}`}
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between items-center">
+              <div>
+                <Badge variant="secondary">{product.category}</Badge>
+              </div>
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="w-full"
+                onClick={() => setSelectedAutomation(product)}
+              >
+                View Details
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
-    </section>
+
+      {selectedAutomation && (
+        <AutomationDetailsModal
+          automation={selectedAutomation}
+          isOpen={true}
+          onClose={() => setSelectedAutomation(null)}
+          onPurchase={handlePurchase}
+        />
+      )}
+    </div>
   );
 };
 

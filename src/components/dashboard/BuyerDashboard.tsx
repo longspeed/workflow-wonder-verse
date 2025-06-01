@@ -15,7 +15,7 @@ import { ProgressiveLoading, ProgressiveList } from '@/components/ui/progressive
 
 const BuyerDashboard = () => {
   const { user } = useAuth();
-  const { profile, products, loading, error, refreshData } = useAccountData();
+  const { profile, products, loading, error, refresh } = useAccountData();
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   // Memoize filtered products
@@ -28,7 +28,7 @@ const BuyerDashboard = () => {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        await refreshData();
+        await refresh();
         setLastUpdate(new Date());
       } catch (error) {
         console.error('Auto-refresh failed:', error);
@@ -36,11 +36,11 @@ const BuyerDashboard = () => {
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [refreshData]);
+  }, [refresh]);
 
   const handleRefresh = useCallback(async () => {
     try {
-      await refreshData();
+      await refresh();
       setLastUpdate(new Date());
       toast({
         title: "Data refreshed",
@@ -53,7 +53,7 @@ const BuyerDashboard = () => {
         variant: "destructive",
       });
     }
-  }, [refreshData]);
+  }, [refresh]);
 
   // Keyboard shortcuts
   useKeyboardShortcut('r', handleRefresh, { ctrl: true });
