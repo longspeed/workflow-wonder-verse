@@ -1,16 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Zap, Star, Eye, Download, ExternalLink } from 'lucide-react';
+import { Star, Search, Filter, Download, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import AutomationDetailsModal from '@/components/browse/AutomationDetailsModal';
 
 interface Automation {
@@ -36,17 +33,32 @@ interface Automation {
 }
 
 const Browse = () => {
-  const { user } = useAuth();
+  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [filteredAutomations, setFilteredAutomations] = useState<Automation[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [priceFilter, setPriceFilter] = useState('all');
   const [ratingFilter, setRatingFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [userPurchases, setUserPurchases] = useState<string[]>([]);
 
-  const { data: automations = [], isLoading, refetch } = useQuery({
-    queryKey: ['automations', searchTerm, selectedCategory, priceFilter, ratingFilter],
-    queryFn: async () => {
-      let query = supabase
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const categories = ['all', 'Web Scraping', 'Data Processing', 'Email Automation', 'Social Media', 'E-commerce', 'Marketing', 'Finance'];
+
+  useEffect(() => {
+    fetchAutomations();
+    if (user) {
+      fetchUserPurchases();
+    }
+  }, [user]);
+
+  const fetchAutomations = async () => {
+    try {
+      const { data, error } = await supabase
         .from('products')
         .select(`
           *,
@@ -57,242 +69,300 @@ const Browse = () => {
         `)
         .eq('status', 'published');
 
-      // Apply search filter
-      if (searchTerm) {
-        query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
-      }
-
-      // Apply category filter
-      if (selectedCategory !== 'all') {
-        query = query.eq('category', selectedCategory);
-      }
-
-      // Apply price filter
-      if (priceFilter === 'free') {
-        query = query.eq('price', 0);
-      } else if (priceFilter === 'under-50') {
-        query = query.lt('price', 50);
-      } else if (priceFilter === '50-100') {
-        query = query.gte('price', 50).lte('price', 100);
-      } else if (priceFilter === 'enterprise') {
-        query = query.gt('price', 100);
-      }
-
-      // Apply rating filter
-      if (ratingFilter === '4-plus') {
-        query = query.gte('rating', 4);
-      } else if (ratingFilter === '3-plus') {
-        query = query.gte('rating', 3);
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-      
       if (error) throw error;
-      return data as Automation[];
-    },
-  });
+
+      // Type assertion with proper handling
+      const typedData = (data || []).map(item => ({
+        ...item,
+        profiles: item.profiles && typeof item.profiles === 'object' && !('error' in item.profiles) 
+          ? item.profiles as { full_name: string; avatar_url: string }
+          : null
+      })) as Automation[];
+
+      setAutomations(typedData);
+      setFilteredAutomations(typedData);
+    } catch (error) {
+      console.error('Error fetching automations:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load automations",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserPurchases = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_purchases')
+        .select('product_id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setUserPurchases(data?.map(p => p.product_id) || []);
+    } catch (error) {
+      console.error('Error fetching user purchases:', error);
+    }
+  };
 
   const handlePurchase = async (automation: Automation) => {
     if (!user) {
-      toast.error('Please log in to purchase automations');
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to purchase automations",
+        variant: "destructive",
+      });
       return;
     }
 
-    if (automation.price === 0) {
-      // Free automation - just add to user's library
-      try {
+    if (userPurchases.includes(automation.id)) {
+      toast({
+        title: "Already Purchased",
+        description: "You already own this automation",
+        variant: "default",
+      });
+      return;
+    }
+
+    try {
+      if (automation.price === 0) {
+        // Free automation - add to user's library
         const { error } = await supabase
           .from('user_purchases')
           .insert({
             user_id: user.id,
             product_id: automation.id,
-            purchase_price: 0,
-            purchase_date: new Date().toISOString()
+            purchase_price: 0
           });
 
         if (error) throw error;
 
-        // Update download count
-        await supabase
-          .from('products')
-          .update({ download_count: (automation.download_count || 0) + 1 })
-          .eq('id', automation.id);
-
-        toast.success('Free automation added to your library!');
-        refetch();
-      } catch (error) {
-        console.error('Error adding free automation:', error);
-        toast.error('Failed to add automation to library');
+        setUserPurchases([...userPurchases, automation.id]);
+        toast({
+          title: "Success",
+          description: "Free automation added to your library!",
+          variant: "default",
+        });
+      } else {
+        // Paid automation - would integrate with Stripe here
+        toast({
+          title: "Purchase",
+          description: "Stripe integration would handle this purchase",
+          variant: "default",
+        });
       }
-    } else {
-      // Paid automation - would implement Stripe checkout here
-      toast.info('Paid checkout coming soon! This would redirect to Stripe.');
+    } catch (error) {
+      console.error('Error purchasing automation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to purchase automation",
+        variant: "destructive",
+      });
     }
   };
 
-  const categories = ['all', 'Productivity', 'CRM', 'Marketing', 'Analytics', 'E-commerce', 'Social Media'];
+  useEffect(() => {
+    let filtered = automations;
+
+    if (searchTerm) {
+      filtered = filtered.filter(automation =>
+        automation.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        automation.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        automation.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(automation => automation.category === selectedCategory);
+    }
+
+    if (priceFilter !== 'all') {
+      if (priceFilter === 'free') {
+        filtered = filtered.filter(automation => automation.price === 0);
+      } else if (priceFilter === 'paid') {
+        filtered = filtered.filter(automation => automation.price > 0);
+      }
+    }
+
+    if (ratingFilter !== 'all') {
+      const minRating = parseInt(ratingFilter);
+      filtered = filtered.filter(automation => automation.rating >= minRating);
+    }
+
+    setFilteredAutomations(filtered);
+  }, [searchTerm, selectedCategory, priceFilter, ratingFilter, automations]);
+
+  const openModal = (automation: Automation) => {
+    setSelectedAutomation(automation);
+    setModalOpen(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading automations...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-white font-homepage">
-      <Header />
-      <main className="pt-12 pb-20">
-        {/* Hero Section */}
-        <section className="max-w-4xl mx-auto px-4 text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-4">Browse AI Automations</h1>
-          <p className="text-lg text-gray-500 mb-6">Discover, compare, and deploy the best AI automations for your business needs.</p>
-          <div className="flex justify-center">
-            <Input 
-              className="w-full max-w-lg rounded-full px-6 py-4 text-lg border-gray-200 shadow-sm focus:border-primary" 
-              placeholder="Search automations..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </section>
-
-        <div className="max-w-7xl mx-auto px-4 flex gap-8">
-          {/* Filter Sidebar */}
-          <aside className="hidden lg:block w-64 pt-2">
-            <div className="bg-gray-50 rounded-2xl shadow p-6 mb-6">
-              <h2 className="text-lg font-semibold mb-4">Filters</h2>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">Browse AI Automations</h1>
+            
+            {/* Search and Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="relative lg:col-span-2">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search automations..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
               
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Category</label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category === 'all' ? 'All Categories' : category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category === 'all' ? 'All Categories' : category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Price</label>
-                <Select value={priceFilter} onValueChange={setPriceFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Prices</SelectItem>
-                    <SelectItem value="free">Free</SelectItem>
-                    <SelectItem value="under-50">Under $50</SelectItem>
-                    <SelectItem value="50-100">$50-$100</SelectItem>
-                    <SelectItem value="enterprise">Enterprise ($100+)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={priceFilter} onValueChange={setPriceFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Price" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Prices</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
 
-              <div>
-                <label className="block text-gray-700 mb-2">Rating</label>
-                <Select value={ratingFilter} onValueChange={setRatingFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Ratings</SelectItem>
-                    <SelectItem value="4-plus">4 stars & up</SelectItem>
-                    <SelectItem value="3-plus">3 stars & up</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={ratingFilter} onValueChange={setRatingFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Rating" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Ratings</SelectItem>
+                  <SelectItem value="4">4+ Stars</SelectItem>
+                  <SelectItem value="3">3+ Stars</SelectItem>
+                  <SelectItem value="2">2+ Stars</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </aside>
-
-          {/* Automations Grid */}
-          <section className="flex-1">
-            {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[...Array(6)].map((_, idx) => (
-                  <div key={idx} className="animate-pulse">
-                    <div className="bg-gray-200 rounded-2xl h-80"></div>
-                  </div>
-                ))}
-              </div>
-            ) : automations.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No automations found matching your criteria.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {automations.map((automation) => (
-                  <Card key={automation.id} className="rounded-2xl shadow-lg hover:shadow-2xl transition-all border border-gray-100 group cursor-pointer">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="bg-blue-100 rounded-xl p-3">
-                          <Zap className="w-7 h-7 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-xl font-semibold text-gray-900 group-hover:text-primary mb-1 line-clamp-1">
-                            {automation.title}
-                          </h3>
-                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                            {automation.category}
-                          </span>
-                        </div>
-                      </div>
-
-                      <p className="text-gray-600 mb-4 line-clamp-2">{automation.description}</p>
-
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-1 text-yellow-500">
-                          <Star className="w-4 h-4 fill-yellow-400" />
-                          <span className="font-semibold text-gray-900 ml-1">
-                            {automation.rating?.toFixed(1) || '0.0'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 text-gray-500 text-sm">
-                          <span className="flex items-center gap-1">
-                            <Download className="w-4 h-4" />
-                            {automation.download_count || 0}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-primary">
-                          {automation.price === 0 ? 'Free' : `$${automation.price}`}
-                        </span>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedAutomation(automation)}
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handlePurchase(automation)}
-                            disabled={!user}
-                          >
-                            {automation.price === 0 ? 'Get Free' : 'Buy Now'}
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </section>
+          </div>
         </div>
-      </main>
+      </div>
 
-      <Footer />
+      {/* Results */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <p className="text-gray-600">
+            {filteredAutomations.length} automation{filteredAutomations.length !== 1 ? 's' : ''} found
+          </p>
+        </div>
 
-      {/* Automation Details Modal */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredAutomations.map((automation) => (
+            <Card key={automation.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => openModal(automation)}>
+              {automation.image_urls && automation.image_urls.length > 0 && (
+                <div className="aspect-video w-full overflow-hidden rounded-t-lg">
+                  <img
+                    src={automation.image_urls[0]}
+                    alt={automation.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-lg font-semibold line-clamp-2">{automation.title}</CardTitle>
+                  {userPurchases.includes(automation.id) && (
+                    <Badge variant="default" className="ml-2">Owned</Badge>
+                  )}
+                </div>
+              </CardHeader>
+
+              <CardContent className="pt-0">
+                <p className="text-gray-600 text-sm line-clamp-3 mb-4">{automation.description}</p>
+                
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center">
+                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                    <span className="text-sm font-medium ml-1">{automation.rating?.toFixed(1) || '0.0'}</span>
+                  </div>
+                  <span className="text-gray-300">•</span>
+                  <div className="flex items-center">
+                    <Download className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-600 ml-1">{automation.download_count || 0}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {automation.tags.slice(0, 2).map((tag, index) => (
+                    <Badge key={index} variant="default" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                  {automation.tags.length > 2 && (
+                    <Badge variant="default" className="text-xs">
+                      +{automation.tags.length - 2} more
+                    </Badge>
+                  )}
+                </div>
+              </CardContent>
+
+              <CardFooter className="pt-0">
+                <div className="flex justify-between items-center w-full">
+                  <div className="flex items-center">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    <span className="font-bold text-lg">
+                      {automation.price === 0 ? 'Free' : `$${automation.price}`}
+                    </span>
+                  </div>
+                  <Badge variant="default">
+                    {automation.category}
+                  </Badge>
+                </div>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+
+        {filteredAutomations.length === 0 && (
+          <div className="text-center py-12">
+            <Filter className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No automations found</h3>
+            <p className="text-gray-600">Try adjusting your search criteria or filters.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Modal */}
       {selectedAutomation && (
         <AutomationDetailsModal
           automation={selectedAutomation}
-          isOpen={!!selectedAutomation}
-          onClose={() => setSelectedAutomation(null)}
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
           onPurchase={handlePurchase}
         />
       )}
