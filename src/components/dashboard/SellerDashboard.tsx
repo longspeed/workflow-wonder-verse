@@ -1,58 +1,140 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DollarSign, Zap, Star, MessageSquare, Plus, Edit, Users, TrendingUp } from 'lucide-react';
+import { DollarSign, Zap, Star, MessageSquare, Plus, Edit, Users, TrendingUp, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountData } from '@/hooks/useAccountData';
 import AddAutomationModal from './AddAutomationModal';
+import { toast } from '@/components/ui/use-toast';
+import { LoadingState } from '@/components/ui/loading-state';
+import { ErrorState } from '@/components/ui/error-state';
+import type { Database } from '@/integrations/supabase/types';
+
+type Product = Database['public']['Tables']['products']['Row'] & {
+  sales_count?: number;
+};
 
 const SellerDashboard = () => {
   const { user } = useAuth();
+  const { profile, products, loading, error, refreshData } = useAccountData();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  // Auto-refresh every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        await refreshData();
+        setLastUpdate(new Date());
+      } catch (error) {
+        console.error('Auto-refresh failed:', error);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [refreshData]);
+
+  const handleRefresh = async () => {
+    try {
+      await refreshData();
+      setLastUpdate(new Date());
+      toast({
+        title: "Data refreshed",
+        description: "Your dashboard data has been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh failed",
+        description: "Failed to refresh dashboard data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const stats = [
     {
       title: 'Total Revenue',
-      value: '$12,450',
+      value: `$${products.reduce((sum, p) => sum + (p.price || 0), 0).toLocaleString()}`,
       change: '+12.5%',
       icon: DollarSign,
       color: 'text-green-600',
     },
     {
       title: 'Active Listings',
-      value: '23',
-      change: '+3 this week',
+      value: products.length.toString(),
+      change: `${products.filter(p => p.status === 'published').length} published`,
       icon: Zap,
       color: 'text-blue-600',
     },
     {
       title: 'Average Rating',
-      value: '4.8',
-      change: '142 reviews',
+      value: products.length > 0 
+        ? (products.reduce((sum, p) => sum + (p.rating || 0), 0) / products.length).toFixed(1)
+        : '0.0',
+      change: `${products.length} products`,
       icon: Star,
       color: 'text-yellow-600',
     },
     {
       title: 'Total Sales',
-      value: '1,284',
+      value: products.reduce((sum, p) => sum + ((p as Product).sales_count || 0), 0).toString(),
       change: '+18 today',
       icon: TrendingUp,
       color: 'text-purple-600',
     },
   ];
 
-  const topAutomations = [
-    { name: 'Email Marketing Bot', sales: 245, revenue: '$4,900', rating: 4.9 },
-    { name: 'Social Media Scheduler', sales: 189, revenue: '$3,780', rating: 4.7 },
-    { name: 'Lead Generation Tool', sales: 156, revenue: '$3,120', rating: 4.8 },
-  ];
+  const topAutomations = products
+    .sort((a, b) => ((b as Product).sales_count || 0) - ((a as Product).sales_count || 0))
+    .slice(0, 3)
+    .map(product => ({
+      name: product.title,
+      sales: (product as Product).sales_count || 0,
+      revenue: `$${(product.price || 0) * ((product as Product).sales_count || 0)}`,
+      rating: product.rating || 0,
+    }));
+
+  if (loading) {
+    return (
+      <LoadingState 
+        message="Loading your dashboard data..."
+        subMessage="This may take a few moments"
+      />
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorState 
+        title="Error loading dashboard data"
+        error={error}
+        onRetry={handleRefresh}
+      />
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-yellow-900 mb-2">
-          Welcome back, {user?.user_metadata?.full_name || 'Seller'}!
-        </h1>
-        <p className="text-yellow-700">Here's what's happening with your automations today.</p>
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-yellow-900 mb-2">
+            Welcome back, {profile?.full_name || user?.user_metadata?.full_name || 'Seller'}!
+          </h1>
+          <p className="text-yellow-700">
+            Here's what's happening with your automations today.
+            <span className="text-sm text-yellow-600 ml-2">
+              Last updated: {lastUpdate.toLocaleTimeString()}
+            </span>
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={handleRefresh}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Refresh Data
+        </Button>
       </div>
 
       {/* Stats Grid */}
@@ -78,117 +160,48 @@ const SellerDashboard = () => {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Actions */}
-        <Card className="bg-white border-yellow-200">
-          <CardHeader>
-            <CardTitle className="text-yellow-900">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button 
-              className="w-full justify-start bg-yellow-500 hover:bg-yellow-600 text-yellow-900"
-              onClick={() => setShowAddModal(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add New Automation
-            </Button>
-            <Button variant="outline" className="w-full justify-start border-yellow-300 text-yellow-700 hover:bg-yellow-50">
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Existing Listing
-            </Button>
-            <Button variant="outline" className="w-full justify-start border-yellow-300 text-yellow-700 hover:bg-yellow-50">
-              <Users className="mr-2 h-4 w-4" />
-              View My Storefront
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Top Performing Automations */}
-        <Card className="lg:col-span-2 bg-white border-yellow-200">
-          <CardHeader>
-            <CardTitle className="text-yellow-900">Top Performing Automations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {topAutomations.map((automation, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
-                  <div>
-                    <h4 className="font-medium text-yellow-900">{automation.name}</h4>
-                    <div className="flex items-center space-x-4 text-sm text-yellow-700">
-                      <span>{automation.sales} sales</span>
-                      <span className="flex items-center">
-                        <Star className="h-3 w-3 mr-1 text-yellow-500" />
-                        {automation.rating}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-yellow-900">{automation.revenue}</p>
-                    <p className="text-sm text-yellow-600">Revenue</p>
-                  </div>
+      {/* Top Automations */}
+      <Card className="bg-white border-yellow-200 mb-8">
+        <CardHeader>
+          <CardTitle className="text-yellow-900">Top Performing Automations</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {topAutomations.map((automation, index) => (
+              <div key={index} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
+                <div>
+                  <h3 className="font-medium text-yellow-900">{automation.name}</h3>
+                  <p className="text-sm text-yellow-700">{automation.sales} sales</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="text-right">
+                  <p className="font-medium text-yellow-900">{automation.revenue}</p>
+                  <p className="text-sm text-yellow-700">Rating: {automation.rating.toFixed(1)}</p>
+                </div>
+              </div>
+            ))}
+            {topAutomations.length === 0 && (
+              <div className="text-center py-8 text-yellow-700">
+                <p>No automations yet. Start by adding your first automation!</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Communications Hub */}
-        <Card className="lg:col-span-1 bg-white border-yellow-200">
-          <CardHeader>
-            <CardTitle className="text-yellow-900 flex items-center">
-              <MessageSquare className="mr-2 h-5 w-5" />
-              Messages
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="p-3 bg-yellow-50 rounded-lg">
-                <p className="text-sm font-medium text-yellow-900">New support request</p>
-                <p className="text-xs text-yellow-700">About Email Marketing Bot</p>
-              </div>
-              <div className="p-3 bg-yellow-50 rounded-lg">
-                <p className="text-sm font-medium text-yellow-900">Customer review</p>
-                <p className="text-xs text-yellow-700">5 stars on Social Scheduler</p>
-              </div>
-              <Button variant="outline" className="w-full text-sm border-yellow-300 text-yellow-700 hover:bg-yellow-50">
-                View All Messages
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card className="lg:col-span-2 bg-white border-yellow-200">
-          <CardHeader>
-            <CardTitle className="text-yellow-900">Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-yellow-100">
-                <span className="text-sm text-yellow-700">New sale: Email Marketing Bot</span>
-                <span className="text-sm font-medium text-green-600">+$20.00</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-yellow-100">
-                <span className="text-sm text-yellow-700">Review received on Lead Generation Tool</span>
-                <span className="text-sm text-yellow-600">⭐ 5 stars</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-yellow-100">
-                <span className="text-sm text-yellow-700">Product view: Social Media Scheduler</span>
-                <span className="text-sm text-yellow-600">2 hours ago</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Add New Automation Button */}
+      <div className="flex justify-end">
+        <Button
+          onClick={() => setShowAddModal(true)}
+          className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add New Automation
+        </Button>
       </div>
 
-      {/* Add Automation Modal */}
-      <AddAutomationModal 
-        open={showAddModal} 
+      <AddAutomationModal
+        open={showAddModal}
         onOpenChange={setShowAddModal}
-        onSuccess={() => {
-          // You can add logic here to refresh the dashboard data
-          console.log('New automation added successfully!');
-        }}
       />
     </div>
   );
