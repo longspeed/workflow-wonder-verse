@@ -29,7 +29,7 @@ export const useAccountData = () => {
       setProfile(profileData);
 
       // Fetch user's products
-      const productsData = await productService.getProducts();
+      const { data: productsData } = await productService.getProducts();
       setProducts(productsData || []);
     } catch (err) {
       console.error('Error fetching account data:', err);

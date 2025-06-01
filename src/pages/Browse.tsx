@@ -76,7 +76,7 @@ const Browse = () => {
         return {
           ...item,
           profiles: item.profiles && typeof item.profiles === 'object' && 'full_name' in item.profiles 
-            ? item.profiles 
+            ? item.profiles as { full_name: string; avatar_url: string }
             : null
         };
       }) as Automation[];

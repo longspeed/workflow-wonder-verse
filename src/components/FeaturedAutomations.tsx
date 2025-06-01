@@ -17,18 +17,18 @@ import { useAuth } from '@/hooks/useAuth';
 interface Product {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   price: number;
-  currency: string;
-  rating: number;
-  download_count: number;
+  currency: string | null;
+  rating: number | null;
+  download_count: number | null;
   category: string;
-  tags: string[];
-  image_urls: string[];
-  demo_url: string;
-  documentation_url: string;
+  tags: string[] | null;
+  image_urls: string[] | null;
+  demo_url: string | null;
+  documentation_url: string | null;
   seller_id: string;
-  status: string;
+  status: string | null;
   created_at: string;
   profiles?: {
     full_name: string;
@@ -44,8 +44,8 @@ const FeaturedAutomations = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const productsData = await productService.getProducts();
-        setProducts(productsData);
+        const { data } = await productService.getProducts();
+        setProducts(data || []);
       } catch (error) {
         console.error('Error fetching products:', error);
       }
@@ -70,7 +70,7 @@ const FeaturedAutomations = () => {
           <Card key={product.id}>
             <CardHeader>
               <CardTitle>{product.title}</CardTitle>
-              <CardDescription>{product.description.slice(0, 100)}...</CardDescription>
+              <CardDescription>{product.description?.slice(0, 100)}...</CardDescription>
             </CardHeader>
             <CardContent>
               {product.image_urls && product.image_urls.length > 0 && (

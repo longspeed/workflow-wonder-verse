@@ -17,12 +17,16 @@ export interface UseFileUploadReturn {
   uploading: boolean;
   error: FileUploadError | null;
   progress: number;
+  uploadBatch: (files: File[], options: any) => Promise<any[]>;
+  isUploading: boolean;
+  batchProgress: Record<string, number>;
 }
 
 export const useFileUpload = (): UseFileUploadReturn => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<FileUploadError | null>(null);
   const [progress, setProgress] = useState(0);
+  const [batchProgress, setBatchProgress] = useState<Record<string, number>>({});
 
   const upload = useCallback(async (
     uploadFile: File,
@@ -68,11 +72,62 @@ export const useFileUpload = (): UseFileUploadReturn => {
     }
   }, []);
 
+  const uploadBatch = useCallback(async (
+    files: File[],
+    options: any
+  ): Promise<any[]> => {
+    setUploading(true);
+    setError(null);
+    setBatchProgress({});
+
+    try {
+      const results = await Promise.all(
+        files.map(async (file, index) => {
+          const path = `${Date.now()}_${index}_${file.name}`;
+          setBatchProgress(prev => ({ ...prev, [path]: 0 }));
+
+          try {
+            const uploadData = await storageService.uploadFile(options.bucket, path, file);
+            const publicUrl = await storageService.getPublicUrl(options.bucket, path);
+            
+            setBatchProgress(prev => ({ ...prev, [path]: 100 }));
+            
+            return {
+              success: true,
+              publicUrl,
+              path: uploadData.path
+            };
+          } catch (err) {
+            return {
+              success: false,
+              error: err instanceof Error ? err.message : 'Upload failed'
+            };
+          }
+        })
+      );
+
+      return results;
+    } catch (err) {
+      const uploadError: FileUploadError = {
+        message: err instanceof Error ? err.message : 'Batch upload failed',
+        code: 'BATCH_UPLOAD_ERROR'
+      };
+      setError(uploadError);
+      throw uploadError;
+    } finally {
+      setUploading(false);
+      setTimeout(() => setBatchProgress({}), 1000);
+    }
+  }, []);
+
   return {
     upload,
     uploading,
     error,
-    progress
+    progress,
+    uploadBatch,
+    isUploading: uploading,
+    batchProgress
   };
 };
 
