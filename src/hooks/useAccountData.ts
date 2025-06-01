@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
-import { profileService, productService } from '@/services/supabase';
+import { productService, profileService } from '@/services/supabase';
 import type { Database } from '@/integrations/supabase/types';
 
 type Product = Database['public']['Tables']['products']['Row'];
@@ -28,7 +29,7 @@ export const useAccountData = () => {
       setProfile(profileData);
 
       // Fetch user's products
-      const { data: productsData } = await productService.getProducts();
+      const productsData = await productService.getProducts();
       setProducts(productsData || []);
     } catch (err) {
       console.error('Error fetching account data:', err);

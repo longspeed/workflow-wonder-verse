@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { productService } from '@/services/supabase';
 import { Button } from "@/components/ui/button"
@@ -92,7 +93,7 @@ const FeaturedAutomations = () => {
             </CardContent>
             <CardFooter className="flex justify-between items-center">
               <div>
-                <Badge variant="secondary">{product.category}</Badge>
+                <Badge variant="default">{product.category}</Badge>
               </div>
               <Button 
                 variant="default" 

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -15,7 +16,7 @@ export const productService = {
       .order('created_at', { ascending: false });
     
     if (error) throw error;
-    return data;
+    return { data };
   },
 
   async getProductById(id: string) {

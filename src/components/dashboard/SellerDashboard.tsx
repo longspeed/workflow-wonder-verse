@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { DollarSign, Zap, Star, MessageSquare, Plus, Edit, Users, TrendingUp, Re
 import { useAuth } from '@/hooks/useAuth';
 import { useAccountData } from '@/hooks/useAccountData';
 import AddAutomationModal from './AddAutomationModal';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ErrorState } from '@/components/ui/error-state';
 import type { Database } from '@/integrations/supabase/types';
@@ -19,6 +20,7 @@ const SellerDashboard = () => {
   const { profile, products, loading, error, refresh } = useAccountData();
   const [showAddModal, setShowAddModal] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const { toast } = useToast();
 
   // Auto-refresh every 5 minutes
   useEffect(() => {
@@ -49,6 +51,10 @@ const SellerDashboard = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleAddAutomationSuccess = () => {
+    refresh();
   };
 
   const publishedProducts = products.filter(product => product.status === 'published');
@@ -204,6 +210,7 @@ const SellerDashboard = () => {
       <AddAutomationModal
         open={showAddModal}
         onOpenChange={setShowAddModal}
+        onSuccess={handleAddAutomationSuccess}
       />
     </div>
   );
