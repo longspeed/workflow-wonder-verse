@@ -28,10 +28,11 @@ interface Automation {
   documentation_url: string;
   seller_id: string;
   status: string;
+  created_at: string;
   profiles?: {
     full_name: string;
     avatar_url: string;
-  };
+  } | null;
 }
 
 const Browse = () => {
@@ -49,7 +50,7 @@ const Browse = () => {
         .from('products')
         .select(`
           *,
-          profiles:seller_id (
+          profiles!products_seller_id_fkey (
             full_name,
             avatar_url
           )

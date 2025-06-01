@@ -30,7 +30,7 @@ interface Automation {
   profiles?: {
     full_name: string;
     avatar_url: string;
-  };
+  } | null;
 }
 
 interface AutomationDetailsModalProps {
