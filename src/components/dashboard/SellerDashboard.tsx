@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DollarSign, Zap, Star, MessageSquare, Plus, Edit, Users, TrendingUp, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSellerData } from '@/hooks/useSellerData';
+import { useAccountData } from '@/hooks/useAccountData';
 import AddAutomationModal from './AddAutomationModal';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ErrorState } from '@/components/ui/error-state';
 import type { Database } from '@/integrations/supabase/types';
@@ -16,9 +16,10 @@ type Product = Database['public']['Tables']['products']['Row'] & {
 
 const SellerDashboard = () => {
   const { user } = useAuth();
-  const { profile, products, loading, error, refresh } = useSellerData();
+  const { profile, products, loading, error, refresh } = useAccountData();
   const [showAddModal, setShowAddModal] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const { toast } = useToast();
 
   // Auto-refresh every 5 minutes
   useEffect(() => {
@@ -51,7 +52,7 @@ const SellerDashboard = () => {
     }
   };
 
-  const handleAddSuccess = async () => {
+  const handleAddAutomationSuccess = async () => {
     try {
       await refresh();
       setLastUpdate(new Date());
@@ -68,40 +69,42 @@ const SellerDashboard = () => {
     }
   };
 
+  const publishedProducts = products.filter(product => product.status === 'published');
+
   const stats = [
     {
       title: 'Total Revenue',
-      value: `$${products.reduce((sum, p) => sum + (p.price || 0), 0).toLocaleString()}`,
+      value: `$${publishedProducts.reduce((sum, p) => sum + (p.price || 0), 0).toLocaleString()}`,
       change: '+12.5%',
       icon: DollarSign,
       color: 'text-green-600',
     },
     {
       title: 'Active Listings',
-      value: products.length.toString(),
-      change: `${products.filter(p => p.status === 'published').length} published`,
+      value: publishedProducts.length.toString(),
+      change: `${publishedProducts.filter(p => p.status === 'published').length} published`,
       icon: Zap,
       color: 'text-blue-600',
     },
     {
       title: 'Average Rating',
-      value: products.length > 0 
-        ? (products.reduce((sum, p) => sum + (p.rating || 0), 0) / products.length).toFixed(1)
+      value: publishedProducts.length > 0 
+        ? (publishedProducts.reduce((sum, p) => sum + (p.rating || 0), 0) / publishedProducts.length).toFixed(1)
         : '0.0',
-      change: `${products.length} products`,
+      change: `${publishedProducts.length} products`,
       icon: Star,
       color: 'text-yellow-600',
     },
     {
       title: 'Total Sales',
-      value: products.reduce((sum, p) => sum + ((p as Product).sales_count || 0), 0).toString(),
+      value: publishedProducts.reduce((sum, p) => sum + ((p as Product).sales_count || 0), 0).toString(),
       change: '+18 today',
       icon: TrendingUp,
       color: 'text-purple-600',
     },
   ];
 
-  const topAutomations = products
+  const topAutomations = publishedProducts
     .sort((a, b) => ((b as Product).sales_count || 0) - ((a as Product).sales_count || 0))
     .slice(0, 3)
     .map(product => ({
@@ -220,7 +223,7 @@ const SellerDashboard = () => {
       <AddAutomationModal
         open={showAddModal}
         onOpenChange={setShowAddModal}
-        onSuccess={handleAddSuccess}
+        onSuccess={handleAddAutomationSuccess}
       />
     </div>
   );

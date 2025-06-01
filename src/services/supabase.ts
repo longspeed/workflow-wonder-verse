@@ -15,7 +15,7 @@ export const productService = {
       .order('created_at', { ascending: false });
     
     if (error) throw error;
-    return data;
+    return { data };
   },
 
   async getProductById(id: string) {
@@ -109,7 +109,7 @@ export const productService = {
 
     // Upload new image
     const imagePath = `products/${Date.now()}_${imageFile.name}`;
-    await storageService.uploadFile('products', imagePath, imageFile);
+    await storageService.uploadFile('products', imagePath, imageFile, { upsert: true });
 
     // Get public URL
     const imageUrl = await storageService.getPublicUrl('products', imagePath);
@@ -217,10 +217,10 @@ export const storageService = {
     if (error) throw error;
   },
 
-  async listFiles(bucket: string, path?: string) {
+  async listFiles(bucket: string, path: string = '', options: any = {}) {
     const { data, error } = await supabase.storage
       .from(bucket)
-      .list(path || '');
+      .list(path, options);
 
     if (error) throw error;
     return data;
@@ -266,4 +266,4 @@ export const realtimeService = {
       .on('auth_state_change', callback)
       .subscribe();
   }
-}; 
+};

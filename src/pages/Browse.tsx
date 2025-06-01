@@ -1,44 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Zap, Star, Eye, Download, ExternalLink } from 'lucide-react';
+import { Star, Search, Filter, Download, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import AutomationDetailsModal from '@/components/browse/AutomationDetailsModal';
-import type { Database } from '@/integrations/supabase/types';
-import { LoadingState, RealTimeUpdateIndicator } from '@/components/ui/loading-state';
-import { RealTimeUpdateToast } from '@/components/ui/real-time-toast';
-import { useEnhancedData } from '@/hooks/useEnhancedData';
-import { ConnectionStatusBadge } from '@/components/ui/connection-status';
-import { AutomationCard } from '@/components/AutomationCard';
-import { FilterSidebar } from '@/components/FilterSidebar';
-import { SearchBar } from '@/components/SearchBar';
-import { Automation, AutomationFilters, AutomationWithProfiles } from '@/types/automation';
+
+interface Automation {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  rating: number;
+  download_count: number;
+  category: string;
+  tags: string[];
+  image_urls: string[];
+  demo_url: string;
+  documentation_url: string;
+  seller_id: string;
+  status: string;
+  created_at: string;
+  profiles?: {
+    full_name: string;
+    avatar_url: string;
+  } | null;
+}
 
 const Browse = () => {
-  const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState<AutomationFilters>({
-    category: '',
-    price: '',
-    rating: ''
-  });
+  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [filteredAutomations, setFilteredAutomations] = useState<Automation[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [priceFilter, setPriceFilter] = useState('all');
+  const [ratingFilter, setRatingFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [userPurchases, setUserPurchases] = useState<string[]>([]);
 
-  const { data, isLoading, error, connectionStatus, isConnected } = useEnhancedData<Automation[]>({
-    queryKey: ['automations'],
-    queryFn: async () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const categories = ['all', 'Web Scraping', 'Data Processing', 'Email Automation', 'Social Media', 'E-commerce', 'Marketing', 'Finance'];
+
+  useEffect(() => {
+    fetchAutomations();
+    if (user) {
+      fetchUserPurchases();
+    }
+  }, [user]);
+
+  const fetchAutomations = async () => {
+    try {
       const { data, error } = await supabase
         .from('products')
         .select(`
           *,
-          profiles (
+          profiles!products_seller_id_fkey (
             full_name,
             avatar_url
           )
@@ -47,165 +71,293 @@ const Browse = () => {
 
       if (error) throw error;
 
-      return (data || []).map((item: AutomationWithProfiles) => {
-        const profiles = item.profiles && typeof item.profiles === 'object' && !('error' in item.profiles)
-          ? item.profiles
-          : undefined;
-
+      // Type assertion with proper handling
+      const typedData = (data || []).map(item => {
+        const profilesData = item.profiles;
         return {
-          id: item.id,
-          name: item.name || '',
-          description: item.description || '',
-          category: item.category || '',
-          price: item.price || 0,
-          rating: item.rating,
-          download_count: item.download_count,
-          currency: item.currency || 'USD',
-          tags: item.tags || [],
-          image_urls: item.image_urls || [],
-          demo_url: item.demo_url || '',
-          documentation_url: item.documentation_url || '',
-          created_at: item.created_at || new Date().toISOString(),
-          updated_at: item.updated_at || new Date().toISOString(),
-          featured: item.featured || false,
-          status: item.status || 'draft',
-          seller_id: item.seller_id || '',
-          profiles
+          ...item,
+          profiles: profilesData && typeof profilesData === 'object' && profilesData !== null && 'full_name' in profilesData 
+            ? (profilesData as { full_name: string; avatar_url: string })
+            : null
         };
-      });
-    },
-    realTimeChannel: 'products',
-    onRealtimeUpdate: (newData) => {
-      console.log('Real-time update received:', newData);
-      RealTimeUpdateToast.updateReceived();
-    },
-    options: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
-      refetchOnReconnect: true
-    }
-  });
+      }) as Automation[];
 
-  const filteredData = data?.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !filters.category || item.category === filters.category;
-    const matchesPrice = !filters.price || item.price <= parseFloat(filters.price);
-    const matchesRating = !filters.rating || (item.rating || 0) >= parseFloat(filters.rating);
-    return matchesSearch && matchesCategory && matchesPrice && matchesRating;
-  });
+      setAutomations(typedData);
+      setFilteredAutomations(typedData);
+    } catch (error) {
+      console.error('Error fetching automations:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load automations",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserPurchases = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_purchases')
+        .select('product_id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setUserPurchases(data?.map(p => p.product_id) || []);
+    } catch (error) {
+      console.error('Error fetching user purchases:', error);
+    }
+  };
 
   const handlePurchase = async (automation: Automation) => {
     if (!user) {
-      toast.error('Please log in to purchase automations');
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to purchase automations",
+        variant: "destructive",
+      });
       return;
     }
 
-    if (automation.price === 0) {
-      // Free automation - just add to user's library
-      try {
+    if (userPurchases.includes(automation.id)) {
+      toast({
+        title: "Already Purchased",
+        description: "You already own this automation",
+        variant: "default",
+      });
+      return;
+    }
+
+    try {
+      if (automation.price === 0) {
+        // Free automation - add to user's library
         const { error } = await supabase
           .from('user_purchases')
           .insert({
             user_id: user.id,
             product_id: automation.id,
-            purchase_price: 0,
-            purchase_date: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            purchase_price: 0
           });
 
         if (error) throw error;
+
+        setUserPurchases([...userPurchases, automation.id]);
+        toast({
+          title: "Success",
+          description: "Free automation added to your library!",
+        });
 
         // Update download count
         await supabase
           .from('products')
           .update({ download_count: (automation.download_count || 0) + 1 })
           .eq('id', automation.id);
-
-        toast.success('Free automation added to your library!');
-      } catch (error) {
-        console.error('Error adding free automation:', error);
-        toast.error('Failed to add automation to library');
+      } else {
+        // Paid automation - handle payment flow
+        toast({
+          title: "Coming Soon",
+          description: "Payment processing will be available soon!",
+        });
       }
-    } else {
-      // Paid automation - would implement Stripe checkout here
-      toast.info('Paid checkout coming soon! This would redirect to Stripe.');
+    } catch (error) {
+      console.error('Error handling purchase:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process your request",
+        variant: "destructive",
+      });
     }
   };
 
-  const categories = ['all', 'Productivity', 'CRM', 'Marketing', 'Analytics', 'E-commerce', 'Social Media'];
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    filterAutomations(value, selectedCategory, priceFilter, ratingFilter);
+  };
 
-  if (error) {
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    filterAutomations(searchTerm, value, priceFilter, ratingFilter);
+  };
+
+  const handlePriceFilter = (value: string) => {
+    setPriceFilter(value);
+    filterAutomations(searchTerm, selectedCategory, value, ratingFilter);
+  };
+
+  const handleRatingFilter = (value: string) => {
+    setRatingFilter(value);
+    filterAutomations(searchTerm, selectedCategory, priceFilter, value);
+  };
+
+  const filterAutomations = (
+    search: string,
+    category: string,
+    price: string,
+    rating: string
+  ) => {
+    let filtered = [...automations];
+
+    // Apply search filter
+    if (search) {
+      filtered = filtered.filter(
+        item =>
+          item.title.toLowerCase().includes(search.toLowerCase()) ||
+          item.description.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Apply category filter
+    if (category !== 'all') {
+      filtered = filtered.filter(item => item.category === category);
+    }
+
+    // Apply price filter
+    if (price !== 'all') {
+      const maxPrice = parseFloat(price);
+      filtered = filtered.filter(item => item.price <= maxPrice);
+    }
+
+    // Apply rating filter
+    if (rating !== 'all') {
+      const minRating = parseFloat(rating);
+      filtered = filtered.filter(item => (item.rating || 0) >= minRating);
+    }
+
+    setFilteredAutomations(filtered);
+  };
+
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Automations</h2>
-          <p className="text-gray-600">{error.message}</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Browse Automations</h1>
-            <div className="flex items-center space-x-4">
-              <ConnectionStatusBadge status={connectionStatus} />
-              <RealTimeUpdateIndicator lastUpdated={new Date()} isUpdating={isLoading} />
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-yellow-900 mb-4">Browse Automations</h1>
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-yellow-600" />
+              <Input
+                type="text"
+                placeholder="Search automations..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-10 bg-white border-yellow-200 focus:border-yellow-500"
+              />
             </div>
+          </div>
+          <div className="flex gap-4">
+            <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+              <SelectTrigger className="w-[180px] bg-white border-yellow-200">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category === 'all' ? 'All Categories' : category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={priceFilter} onValueChange={handlePriceFilter}>
+              <SelectTrigger className="w-[180px] bg-white border-yellow-200">
+                <SelectValue placeholder="Price" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Prices</SelectItem>
+                <SelectItem value="10">Under $10</SelectItem>
+                <SelectItem value="25">Under $25</SelectItem>
+                <SelectItem value="50">Under $50</SelectItem>
+                <SelectItem value="100">Under $100</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={ratingFilter} onValueChange={handleRatingFilter}>
+              <SelectTrigger className="w-[180px] bg-white border-yellow-200">
+                <SelectValue placeholder="Rating" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Ratings</SelectItem>
+                <SelectItem value="4">4+ Stars</SelectItem>
+                <SelectItem value="3">3+ Stars</SelectItem>
+                <SelectItem value="2">2+ Stars</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="lg:w-1/4">
-            <FilterSidebar filters={filters} onFilterChange={setFilters} />
-          </div>
-
-          <div className="lg:w-3/4">
-            <div className="mb-6">
-              <SearchBar value={searchQuery} onChange={setSearchQuery} />
-            </div>
-
-            {isLoading ? (
-              <LoadingState message="Loading automations..." />
-            ) : filteredData?.length === 0 ? (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-medium text-gray-900">No automations found</h3>
-                <p className="mt-2 text-gray-500">Try adjusting your search or filters</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredAutomations.map((automation) => (
+          <Card key={automation.id} className="bg-white border-yellow-200 hover:border-yellow-400 transition-colors">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <CardTitle className="text-yellow-900">{automation.title}</CardTitle>
+                <Badge variant={automation.price === 0 ? "secondary" : "default"}>
+                  {automation.price === 0 ? 'Free' : `$${automation.price}`}
+                </Badge>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredData?.map((automation) => (
-                  <AutomationCard
-                    key={automation.id}
-                    automation={automation}
-                    isConnected={isConnected}
-                  />
+              <div className="flex items-center gap-2 text-sm text-yellow-700">
+                <Star className="h-4 w-4 fill-yellow-400" />
+                <span>{automation.rating?.toFixed(1) || 'No ratings'}</span>
+                <span className="mx-2">•</span>
+                <Download className="h-4 w-4" />
+                <span>{automation.download_count || 0} downloads</span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-yellow-800 line-clamp-2">{automation.description}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {automation.tags?.map((tag) => (
+                  <Badge key={tag} variant="outline" className="bg-yellow-50">
+                    {tag}
+                  </Badge>
                 ))}
               </div>
-            )}
-          </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedAutomation(automation);
+                  setModalOpen(true);
+                }}
+              >
+                View Details
+              </Button>
+              <Button
+                onClick={() => handlePurchase(automation)}
+                disabled={userPurchases.includes(automation.id)}
+                className={userPurchases.includes(automation.id) ? 'bg-green-600' : 'bg-yellow-600 hover:bg-yellow-700'}
+              >
+                {userPurchases.includes(automation.id) ? 'Owned' : 'Get Automation'}
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+
+      {filteredAutomations.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-yellow-700 text-lg">No automations found matching your criteria.</p>
         </div>
-      </main>
-
-      <Footer />
-
-      {/* Automation Details Modal */}
-      {selectedAutomation && (
-        <AutomationDetailsModal
-          automation={selectedAutomation}
-          isOpen={!!selectedAutomation}
-          onClose={() => setSelectedAutomation(null)}
-          onPurchase={handlePurchase}
-        />
       )}
+
+      <AutomationDetailsModal
+        automation={selectedAutomation}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onPurchase={handlePurchase}
+        isPurchased={selectedAutomation ? userPurchases.includes(selectedAutomation.id) : false}
+      />
     </div>
   );
 };

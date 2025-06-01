@@ -30,7 +30,7 @@ interface Automation {
   profiles?: {
     full_name: string;
     avatar_url: string;
-  };
+  } | null;
 }
 
 interface AutomationDetailsModalProps {
@@ -82,7 +82,7 @@ const AutomationDetailsModal = ({ automation, isOpen, onClose, onPurchase }: Aut
                 <h3 className="text-lg font-semibold mb-3">Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {automation.tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary">
+                    <Badge key={index} variant="default">
                       {tag}
                     </Badge>
                   ))}
@@ -203,7 +203,7 @@ const AutomationDetailsModal = ({ automation, isOpen, onClose, onPurchase }: Aut
             {/* Category */}
             <div className="bg-gray-50 rounded-lg p-6">
               <h3 className="font-semibold mb-2">Category</h3>
-              <Badge variant="outline" className="text-sm">
+              <Badge variant="default" className="text-sm">
                 {automation.category}
               </Badge>
             </div>

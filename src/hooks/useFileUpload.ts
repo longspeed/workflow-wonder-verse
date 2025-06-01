@@ -1,172 +1,190 @@
+
 import { useState, useCallback } from 'react';
 import { storageService } from '@/services/supabase';
-import { optimizeImage, validateImage } from '@/lib/image-utils';
 
-interface UploadOptions {
-  bucket: string;
-  path?: string;
-  cacheControl?: string;
-  upsert?: boolean;
-  optimizeImage?: boolean;
-  imageOptions?: {
-    maxWidth?: number;
-    maxHeight?: number;
-    quality?: number;
-    format?: 'jpeg' | 'png' | 'webp';
-  };
+export interface FileUploadResult {
+  url: string;
+  path: string;
 }
 
-interface BatchUploadResult {
-  success: boolean;
-  file: File;
-  data?: any;
-  publicUrl?: string;
-  error?: Error;
+export interface FileUploadError {
+  message: string;
+  code?: string;
 }
 
-export const useFileUpload = () => {
-  const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
+export interface UseFileUploadReturn {
+  upload: (file: File, bucket: string, path?: string) => Promise<FileUploadResult>;
+  uploading: boolean;
+  error: FileUploadError | null;
+  progress: number;
+  uploadBatch: (files: File[], options: any) => Promise<any[]>;
+  isUploading: boolean;
+  batchProgress: Record<string, number>;
+}
+
+export const useFileUpload = (): UseFileUploadReturn => {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<FileUploadError | null>(null);
+  const [progress, setProgress] = useState(0);
   const [batchProgress, setBatchProgress] = useState<Record<string, number>>({});
 
-  const uploadFile = async (file: File, options: UploadOptions) => {
-    setIsUploading(true);
+  const upload = useCallback(async (
+    uploadFile: File,
+    bucket: string,
+    customPath?: string
+  ): Promise<FileUploadResult> => {
+    setUploading(true);
     setError(null);
-    setUploadProgress(0);
+    setProgress(0);
 
     try {
-      // Validate image if it's an image file
-      if (file.type.startsWith('image/')) {
-        const isValid = await validateImage(file);
-        if (!isValid) {
-          throw new Error('Invalid image file');
-        }
+      // Generate path if not provided
+      const path = customPath || `${Date.now()}_${uploadFile.name}`;
+      
+      // Simulate progress for user feedback
+      const progressInterval = setInterval(() => {
+        setProgress(prev => Math.min(prev + 10, 90));
+      }, 100);
 
-        // Optimize image if requested
-        if (options.optimizeImage) {
-          file = await optimizeImage(file, options.imageOptions);
-        }
-      }
-
-      const path = options.path || `${Date.now()}_${file.name}`;
-      const data = await storageService.uploadFile(
-        options.bucket,
-        path,
-        file,
-        {
-          cacheControl: options.cacheControl,
-          upsert: options.upsert
-        }
-      );
-
-      const publicUrl = await storageService.getPublicUrl(options.bucket, path);
-      setUploadProgress(100);
-      return { data, publicUrl };
+      // Upload file
+      const uploadData = await storageService.uploadFile(bucket, path, uploadFile);
+      
+      // Get public URL
+      const publicUrl = await storageService.getPublicUrl(bucket, path);
+      
+      clearInterval(progressInterval);
+      setProgress(100);
+      
+      return {
+        url: publicUrl,
+        path: uploadData.path
+      };
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Upload failed'));
-      throw err;
+      const uploadError: FileUploadError = {
+        message: err instanceof Error ? err.message : 'Upload failed',
+        code: 'UPLOAD_ERROR'
+      };
+      setError(uploadError);
+      throw uploadError;
     } finally {
-      setIsUploading(false);
+      setUploading(false);
+      setTimeout(() => setProgress(0), 1000);
     }
-  };
+  }, []);
 
-  const uploadBatch = async (files: File[], options: UploadOptions) => {
-    setIsUploading(true);
+  const uploadBatch = useCallback(async (
+    files: File[],
+    options: any
+  ): Promise<any[]> => {
+    setUploading(true);
     setError(null);
     setBatchProgress({});
 
-    const results: BatchUploadResult[] = [];
-    const totalFiles = files.length;
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const fileId = `${Date.now()}_${i}`;
-      
-      try {
-        setBatchProgress(prev => ({
-          ...prev,
-          [fileId]: 0
-        }));
-
-        // Validate and optimize image if needed
-        if (file.type.startsWith('image/')) {
-          const isValid = await validateImage(file);
-          if (!isValid) {
-            results.push({
-              success: false,
-              file,
-              error: new Error('Invalid image file')
-            });
-            continue;
-          }
-
-          if (options.optimizeImage) {
-            file = await optimizeImage(file, options.imageOptions);
-          }
-        }
-
-        const path = options.path || `${Date.now()}_${file.name}`;
-        const data = await storageService.uploadFile(
-          options.bucket,
-          path,
-          file,
-          {
-            cacheControl: options.cacheControl,
-            upsert: options.upsert
-          }
-        );
-
-        const publicUrl = await storageService.getPublicUrl(options.bucket, path);
-        
-        setBatchProgress(prev => ({
-          ...prev,
-          [fileId]: 100
-        }));
-
-        results.push({
-          success: true,
-          file,
-          data,
-          publicUrl
-        });
-      } catch (err) {
-        results.push({
-          success: false,
-          file,
-          error: err instanceof Error ? err : new Error('Upload failed')
-        });
-      }
-    }
-
-    setIsUploading(false);
-    return results;
-  };
-
-  const deleteFile = async (bucket: string, path: string) => {
     try {
-      await storageService.deleteFile(bucket, path);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Delete failed'));
-      throw err;
-    }
-  };
+      const results = await Promise.all(
+        files.map(async (file, index) => {
+          const path = `${Date.now()}_${index}_${file.name}`;
+          setBatchProgress(prev => ({ ...prev, [path]: 0 }));
 
-  const deleteBatch = async (files: { bucket: string; path: string }[]) => {
-    const results = await Promise.allSettled(
-      files.map(file => deleteFile(file.bucket, file.path))
-    );
-    return results;
-  };
+          try {
+            const uploadData = await storageService.uploadFile(options.bucket, path, file);
+            const publicUrl = await storageService.getPublicUrl(options.bucket, path);
+            
+            setBatchProgress(prev => ({ ...prev, [path]: 100 }));
+            
+            return {
+              success: true,
+              publicUrl,
+              path: uploadData.path
+            };
+          } catch (err) {
+            return {
+              success: false,
+              error: err instanceof Error ? err.message : 'Upload failed'
+            };
+          }
+        })
+      );
+
+      return results;
+    } catch (err) {
+      const uploadError: FileUploadError = {
+        message: err instanceof Error ? err.message : 'Batch upload failed',
+        code: 'BATCH_UPLOAD_ERROR'
+      };
+      setError(uploadError);
+      throw uploadError;
+    } finally {
+      setUploading(false);
+      setTimeout(() => setBatchProgress({}), 1000);
+    }
+  }, []);
 
   return {
-    uploadFile,
-    uploadBatch,
-    deleteFile,
-    deleteBatch,
-    isUploading,
+    upload,
+    uploading,
     error,
-    uploadProgress,
+    progress,
+    uploadBatch,
+    isUploading: uploading,
     batchProgress
   };
-}; 
+};
+
+// Hook for multiple file uploads
+export const useMultipleFileUpload = () => {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<FileUploadError | null>(null);
+  const [progress, setProgress] = useState<Record<string, number>>({});
+
+  const uploadMultiple = useCallback(async (
+    files: File[],
+    bucket: string,
+    pathGenerator?: (file: File, index: number) => string
+  ): Promise<FileUploadResult[]> => {
+    setUploading(true);
+    setError(null);
+    setProgress({});
+
+    try {
+      const uploadPromises = files.map(async (uploadFile, index) => {
+        const path = pathGenerator 
+          ? pathGenerator(uploadFile, index)
+          : `${Date.now()}_${index}_${uploadFile.name}`;
+
+        // Track individual file progress
+        setProgress(prev => ({ ...prev, [path]: 0 }));
+
+        const uploadData = await storageService.uploadFile(bucket, path, uploadFile);
+        const publicUrl = await storageService.getPublicUrl(bucket, path);
+
+        setProgress(prev => ({ ...prev, [path]: 100 }));
+
+        return {
+          url: publicUrl,
+          path: uploadData.path
+        };
+      });
+
+      const results = await Promise.all(uploadPromises);
+      return results;
+    } catch (err) {
+      const uploadError: FileUploadError = {
+        message: err instanceof Error ? err.message : 'Multiple upload failed',
+        code: 'MULTIPLE_UPLOAD_ERROR'
+      };
+      setError(uploadError);
+      throw uploadError;
+    } finally {
+      setUploading(false);
+      setTimeout(() => setProgress({}), 1000);
+    }
+  }, []);
+
+  return {
+    uploadMultiple,
+    uploading,
+    error,
+    progress
+  };
+};

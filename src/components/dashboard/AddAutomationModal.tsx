@@ -79,10 +79,10 @@ const AddAutomationModal = ({ open, onOpenChange, onSuccess }: AddAutomationModa
     }
   };
 
-  const removeTag = (tagToRemove: string) => {
+  const removeTag = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter((_, i) => i !== index)
     }));
   };
 
@@ -325,14 +325,14 @@ const AddAutomationModal = ({ open, onOpenChange, onSuccess }: AddAutomationModa
         </div>
         <div className="flex flex-wrap gap-2">
           {formData.tags.map((tag, index) => (
-            <Badge key={index} variant="secondary" className="flex items-center gap-1">
+            <Badge key={index} variant="default" className="mr-2 mb-2">
               {tag}
-              <button 
+              <button
                 type="button"
-                onClick={() => removeTag(tag)}
-                className="hover:bg-gray-200 rounded-full p-1"
+                onClick={() => removeTag(index)}
+                className="ml-1 text-xs"
               >
-                <X className="h-3 w-3" />
+                ×
               </button>
             </Badge>
           ))}

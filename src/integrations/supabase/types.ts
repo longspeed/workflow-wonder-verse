@@ -116,33 +116,38 @@ export type Database = {
       }
       user_purchases: {
         Row: {
-          id: string
-          user_id: string
-          product_id: string
-          purchase_price: number
-          purchase_date: string
           created_at: string
-          updated_at: string
+          id: string
+          product_id: string
+          purchase_date: string
+          purchase_price: number
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          product_id: string
-          purchase_price: number
-          purchase_date: string
           created_at?: string
-          updated_at?: string
+          id?: string
+          product_id: string
+          purchase_date?: string
+          purchase_price: number
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          product_id?: string
-          purchase_price?: number
-          purchase_date?: string
           created_at?: string
-          updated_at?: string
+          id?: string
+          product_id?: string
+          purchase_date?: string
+          purchase_price?: number
+          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
