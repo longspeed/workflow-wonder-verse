@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -221,7 +220,7 @@ export const storageService = {
   async listFiles(bucket: string, path?: string) {
     const { data, error } = await supabase.storage
       .from(bucket)
-      .list(path || '');
+      .list(path || '', {}, { signal: new AbortController().signal });
 
     if (error) throw error;
     return data;

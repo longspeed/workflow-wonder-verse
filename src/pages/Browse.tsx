@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,7 @@ const Browse = () => {
         return {
           ...item,
           profiles: item.profiles && typeof item.profiles === 'object' && 'full_name' in item.profiles 
-            ? item.profiles as { full_name: string; avatar_url: string }
+            ? (item.profiles as { full_name: string; avatar_url: string })
             : null
         };
       }) as Automation[];
