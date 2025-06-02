@@ -1,5 +1,5 @@
 
-import { toast, Toaster as SonnerToaster } from "sonner";
+import { Toaster as SonnerToaster, toast } from "sonner";
 
 export { toast };
 
