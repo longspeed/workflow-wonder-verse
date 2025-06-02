@@ -1,22 +1,40 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Automation } from '@/types/marketplace';
 import { AutomationCard } from '@/components/AutomationCard';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 
+interface Automation {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  rating: number;
+  download_count: number;
+  category: string;
+  tags: string[];
+  image_urls: string[];
+  demo_url: string;
+  documentation_url: string;
+  seller_id: string;
+  status: string;
+  created_at: string;
+  name: string; // Added for compatibility
+}
+
 export default function BrowsePage() {
   const router = useRouter();
   const [filters, setFilters] = useState({
     category: '',
-    minPrice: 0,
-    maxPrice: 1000,
-    minRating: 0,
+    price: '',
+    rating: '',
     tags: [] as string[],
     search: '',
     sortBy: 'created_at',
@@ -24,10 +42,10 @@ export default function BrowsePage() {
   });
 
   const { data: automations, isLoading } = useQuery({
-    queryKey: ['automations', filters],
+    queryKey: ['products', filters],
     queryFn: async () => {
       let query = supabase
-        .from('automations')
+        .from('products')
         .select('*')
         .eq('status', 'published');
 
@@ -35,16 +53,14 @@ export default function BrowsePage() {
         query = query.eq('category', filters.category);
       }
 
-      if (filters.minPrice > 0) {
-        query = query.gte('price', filters.minPrice);
+      if (filters.price) {
+        const maxPrice = parseFloat(filters.price);
+        query = query.lte('price', maxPrice);
       }
 
-      if (filters.maxPrice < 1000) {
-        query = query.lte('price', filters.maxPrice);
-      }
-
-      if (filters.minRating > 0) {
-        query = query.gte('rating', filters.minRating);
+      if (filters.rating) {
+        const minRating = parseFloat(filters.rating);
+        query = query.gte('rating', minRating);
       }
 
       if (filters.tags.length > 0) {
@@ -52,14 +68,21 @@ export default function BrowsePage() {
       }
 
       if (filters.search) {
-        query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
 
       query = query.order(filters.sortBy, { ascending: filters.sortOrder === 'asc' });
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Automation[];
+      
+      // Transform products to automation format
+      return data?.map(product => ({
+        ...product,
+        name: product.title, // Map title to name for compatibility
+        rating: product.rating || 0,
+        download_count: product.download_count || 0
+      })) as Automation[];
     }
   });
 
