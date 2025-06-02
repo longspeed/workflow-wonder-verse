@@ -1,52 +1,67 @@
-import React from 'react';
-import { toast } from '@/components/ui/use-toast';
-import { Zap, AlertCircle, CheckCircle2 } from 'lucide-react';
+
+import React, { useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { CheckCircle, AlertCircle, Info, XCircle } from 'lucide-react';
 
 interface RealTimeToastProps {
-  type: 'success' | 'error' | 'info';
-  title: string;
-  description: string;
+  channel?: string;
+  table?: string;
+  event?: 'INSERT' | 'UPDATE' | 'DELETE';
+  onNotification?: (payload: any) => void;
 }
 
-export const showRealTimeToast = ({ type, title, description }: RealTimeToastProps) => {
-  const icons = {
-    success: <CheckCircle2 className="h-4 w-4 text-green-500" />,
-    error: <AlertCircle className="h-4 w-4 text-red-500" />,
-    info: <Zap className="h-4 w-4 text-blue-500" />
-  };
+export function RealTimeToast({ 
+  channel = 'real-time-updates',
+  table = 'products',
+  event = 'INSERT',
+  onNotification
+}: RealTimeToastProps) {
+  useEffect(() => {
+    const subscription = supabase
+      .channel(channel)
+      .on(
+        'postgres_changes',
+        {
+          event,
+          schema: 'public',
+          table
+        },
+        (payload) => {
+          let message = '';
+          let icon = <Info className="w-4 h-4" />;
+          
+          switch (event) {
+            case 'INSERT':
+              message = `New ${table.slice(0, -1)} added`;
+              icon = <CheckCircle className="w-4 h-4 text-green-500" />;
+              break;
+            case 'UPDATE':
+              message = `${table.slice(0, -1)} updated`;
+              icon = <AlertCircle className="w-4 h-4 text-yellow-500" />;
+              break;
+            case 'DELETE':
+              message = `${table.slice(0, -1)} deleted`;
+              icon = <XCircle className="w-4 h-4 text-red-500" />;
+              break;
+          }
 
-  toast({
-    title: (
-      <div className="flex items-center gap-2">
-        {icons[type]}
-        <span>{title}</span>
-      </div>
-    ),
-    description,
-    duration: type === 'error' ? 5000 : 3000,
-    variant: type === 'error' ? 'destructive' : 'default'
-  });
-};
+          toast(message, {
+            description: payload.new?.title || payload.new?.name || 'Real-time update received',
+            icon: icon,
+          });
 
-export const RealTimeUpdateToast = {
-  connectionLost: () => showRealTimeToast({
-    type: 'error',
-    title: 'Connection Lost',
-    description: 'Lost connection to real-time updates. Trying to reconnect...'
-  }),
-  connectionRestored: () => showRealTimeToast({
-    type: 'success',
-    title: 'Connection Restored',
-    description: 'Real-time updates are now working again.'
-  }),
-  newAutomation: (title: string) => showRealTimeToast({
-    type: 'info',
-    title: 'New Automation',
-    description: `A new automation "${title}" has been published.`
-  }),
-  updateReceived: () => showRealTimeToast({
-    type: 'info',
-    title: 'Update Received',
-    description: 'New data has been received and the view has been updated.'
-  })
-}; 
+          if (onNotification) {
+            onNotification(payload);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [channel, table, event, onNotification]);
+
+  return null;
+}

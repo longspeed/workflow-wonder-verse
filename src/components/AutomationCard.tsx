@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star, Heart, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 
 interface Automation {
   id: string;
@@ -30,7 +30,7 @@ interface AutomationCardProps {
 }
 
 export function AutomationCard({ automation }: AutomationCardProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const handlePurchase = async () => {
@@ -98,7 +98,7 @@ export function AutomationCard({ automation }: AutomationCardProps) {
 
           <div className="flex flex-wrap gap-2">
             {automation.tags?.map((tag) => (
-              <Badge key={tag} variant="secondary">
+              <Badge key={tag} variant="outline">
                 {tag}
               </Badge>
             ))}
@@ -123,8 +123,8 @@ export function AutomationCard({ automation }: AutomationCardProps) {
         </div>
         <div className="space-x-2">
           <Button
-            variant="secondary"
-            onClick={() => router.push(`/automations/${automation.id}`)}
+            variant="outline"
+            onClick={() => navigate(`/automations/${automation.id}`)}
           >
             View Details
           </Button>

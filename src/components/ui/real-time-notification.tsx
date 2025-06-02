@@ -20,8 +20,7 @@ export function RealTimeNotification() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // For now, we'll use products table to simulate notifications
-    // In a real app, you'd have a notifications table
+    // Use products table to simulate notifications
     const fetchNotifications = async () => {
       try {
         const { data, error } = await supabase
