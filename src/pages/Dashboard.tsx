@@ -48,8 +48,11 @@ const Dashboard = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  const userRole = user.user_metadata?.role || 'seller';
-  const userName = user.user_metadata?.full_name || 'User';
+  // Add more robust checks for user_metadata
+  const userMetadata = user.user_metadata;
+  const userRole = userMetadata?.role || 'seller';
+  const userName = userMetadata?.full_name || user.email || 'User'; // Fallback to email if name is missing
+  const userAvatar = userMetadata?.avatar_url || '/avatar.svg';
 
   const handleError = (error: Error) => {
     console.error('Dashboard error:', error);
@@ -87,7 +90,7 @@ const Dashboard = () => {
             <div className="flex items-center gap-4">
               <span className="text-foreground font-medium">Welcome, {userName}</span>
               <img
-                src={user.user_metadata?.avatar_url || "/avatar.svg"}
+                src={userAvatar}
                 alt="User avatar"
                 className="w-10 h-10 rounded-full border-2 border-primary"
               />
