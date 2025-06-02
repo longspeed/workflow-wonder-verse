@@ -47,13 +47,28 @@ const FeaturedAutomations = () => {
     const fetchProducts = async () => {
       try {
         const { data } = await productService.getProducts();
-        // Filter out any products with errors and ensure proper typing
-        const validProducts = (data || []).filter((product: any): product is ProductWithProfile => {
-          return product && 
-                 typeof product === 'object' && 
-                 'id' in product && 
-                 (!product.profiles || (product.profiles && 'full_name' in product.profiles));
-        });
+        // Filter and transform products to ensure proper typing
+        const validProducts = (data || [])
+          .filter((product: any) => {
+            return product && 
+                   typeof product === 'object' && 
+                   'id' in product;
+          })
+          .map((product: any): ProductWithProfile => {
+            // Handle the case where profiles might be an error object
+            const validProfiles = product.profiles && 
+                                 typeof product.profiles === 'object' && 
+                                 'full_name' in product.profiles &&
+                                 'avatar_url' in product.profiles
+                                 ? product.profiles 
+                                 : null;
+
+            return {
+              ...product,
+              profiles: validProfiles
+            };
+          });
+        
         setProducts(validProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
