@@ -5,7 +5,6 @@ import { Navigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SellerDashboard from '@/components/dashboard/SellerDashboard';
-import BuyerDashboard from '@/components/dashboard/BuyerDashboard';
 import TeacherDashboard from '@/components/dashboard/TeacherDashboard';
 import LearnerDashboard from '@/components/dashboard/LearnerDashboard';
 import { Loader2 } from 'lucide-react';
@@ -34,7 +33,7 @@ const Dashboard = () => {
       case 'seller':
         return <SellerDashboard />;
       case 'buyer':
-        return <BuyerDashboard />;
+        return <div className="p-8 text-center">Buyer Dashboard - Coming Soon</div>;
       case 'teacher':
         return <TeacherDashboard />;
       case 'learner':
