@@ -1,11 +1,26 @@
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingState } from '@/components/ui/loading-state';
 import { RealTimeUpdateIndicator } from '@/components/ui/loading-state';
 import { ConnectionStatusBadge } from '@/components/ui/connection-status';
-import { RealTimeUpdateToast } from '@/components/ui/real-time-toast';
-import { Purchase, Favorite } from '@/types/marketplace';
+
+interface Purchase {
+  id: string;
+  user_id: string;
+  product_id: string;
+  purchase_price: number;
+  purchase_date: string;
+  created_at: string;
+  product?: {
+    id: string;
+    title: string;
+    description: string;
+    demo_url: string;
+    price: number;
+  };
+}
 
 export default function BuyerDashboard() {
   const [activeTab, setActiveTab] = useState<'purchases' | 'favorites'>('purchases');
@@ -15,10 +30,10 @@ export default function BuyerDashboard() {
     queryKey: ['user-purchases'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('purchases')
+        .from('user_purchases')
         .select(`
           *,
-          automation:automations(*)
+          product:products(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -27,20 +42,11 @@ export default function BuyerDashboard() {
     }
   });
 
-  // Fetch user's favorites
+  // Mock favorites since table doesn't exist
   const { data: favorites, isLoading: isLoadingFavorites } = useQuery({
     queryKey: ['user-favorites'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('favorites')
-        .select(`
-          *,
-          automation:automations(*)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as Favorite[];
+      return [];
     }
   });
 
@@ -98,7 +104,7 @@ export default function BuyerDashboard() {
                   <div key={purchase.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">
-                        {purchase.automation?.name}
+                        {purchase.product?.title || 'Product'}
                       </h3>
                       <p className="mt-1 text-sm text-gray-500">
                         Purchased on {new Date(purchase.created_at).toLocaleDateString()}
@@ -106,14 +112,16 @@ export default function BuyerDashboard() {
                     </div>
                     <div className="flex items-center space-x-4">
                       <span className="text-sm font-medium text-gray-900">
-                        ${purchase.amount}
+                        ${purchase.purchase_price}
                       </span>
-                      <button
-                        onClick={() => window.open(purchase.automation?.demo_url, '_blank')}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                      >
-                        View Demo
-                      </button>
+                      {purchase.product?.demo_url && (
+                        <button
+                          onClick={() => window.open(purchase.product?.demo_url, '_blank')}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                          View Demo
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -123,29 +131,6 @@ export default function BuyerDashboard() {
               </div>
             ) : (
               <div className="space-y-6">
-                {favorites?.map((favorite) => (
-                  <div key={favorite.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">
-                        {favorite.automation?.name}
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-500">
-                        {favorite.automation?.description}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm font-medium text-gray-900">
-                        ${favorite.automation?.price}
-                      </span>
-                      <button
-                        onClick={() => window.open(favorite.automation?.demo_url, '_blank')}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                      >
-                        View Demo
-                      </button>
-                    </div>
-                  </div>
-                ))}
                 {favorites?.length === 0 && (
                   <p className="text-center text-gray-500">No favorites yet.</p>
                 )}
@@ -156,4 +141,4 @@ export default function BuyerDashboard() {
       </main>
     </div>
   );
-} 
+}

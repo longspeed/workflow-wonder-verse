@@ -21,7 +21,7 @@ export function RealTimeToast({
     const subscription = supabase
       .channel(channel)
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event,
           schema: 'public',

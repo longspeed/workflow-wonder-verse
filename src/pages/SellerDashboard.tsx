@@ -1,24 +1,38 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Automation, AutomationStatus } from '@/types/marketplace';
 import { LoadingState } from '@/components/ui/loading-state';
 import { RealTimeUpdateIndicator } from '@/components/ui/loading-state';
 import { ConnectionStatusBadge } from '@/components/ui/connection-status';
-import { RealTimeUpdateToast } from '@/components/ui/real-time-toast';
+
+interface Automation {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  rating: number;
+  download_count: number;
+  category: string;
+  status: string;
+  created_at: string;
+}
+
+type AutomationStatus = 'draft' | 'published' | 'archived';
 
 export default function SellerDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedStatus, setSelectedStatus] = useState<AutomationStatus>('published');
 
-  // Fetch seller's automations
+  // Fetch seller's automations from products table
   const { data: automations, isLoading } = useQuery({
     queryKey: ['seller-automations', selectedStatus],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('automations')
+        .from('products')
         .select('*')
         .eq('status', selectedStatus)
         .order('created_at', { ascending: false });
@@ -28,24 +42,24 @@ export default function SellerDashboard() {
     }
   });
 
-  // Fetch sales analytics
+  // Fetch sales analytics from user_purchases
   const { data: salesAnalytics } = useQuery({
     queryKey: ['seller-sales'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('purchases')
+        .from('user_purchases')
         .select(`
           *,
-          automation:automations(*)
+          product:products(*)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const totalSales = data.reduce((sum, purchase) => sum + purchase.amount, 0);
+      const totalSales = data.reduce((sum, purchase) => sum + purchase.purchase_price, 0);
       const salesByMonth = data.reduce((acc, purchase) => {
         const month = new Date(purchase.created_at).toLocaleString('default', { month: 'long' });
-        acc[month] = (acc[month] || 0) + purchase.amount;
+        acc[month] = (acc[month] || 0) + purchase.purchase_price;
         return acc;
       }, {} as Record<string, number>);
 
@@ -61,7 +75,7 @@ export default function SellerDashboard() {
   const updateStatusMutation = useMutation({
     mutationFn: async ({ automationId, status }: { automationId: string; status: AutomationStatus }) => {
       const { data, error } = await supabase
-        .from('automations')
+        .from('products')
         .update({ status })
         .eq('id', automationId)
         .select()
@@ -114,7 +128,7 @@ export default function SellerDashboard() {
                 <div>
                   <p className="text-sm text-gray-500">Total Sales</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    ${salesAnalytics?.totalSales.toFixed(2)}
+                    ${salesAnalytics?.totalSales?.toFixed(2) || '0.00'}
                   </p>
                 </div>
                 <div>
@@ -154,7 +168,7 @@ export default function SellerDashboard() {
                   <div key={automation.id} className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900">{automation.name}</h3>
+                        <h3 className="text-lg font-medium text-gray-900">{automation.title}</h3>
                         <p className="mt-1 text-sm text-gray-500">{automation.description}</p>
                       </div>
                       <div className="flex items-center space-x-4">
@@ -182,6 +196,11 @@ export default function SellerDashboard() {
                     </div>
                   </div>
                 ))}
+                {automations?.length === 0 && (
+                  <div className="p-6 text-center text-gray-500">
+                    No automations found for status: {selectedStatus}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -189,4 +208,4 @@ export default function SellerDashboard() {
       </main>
     </div>
   );
-} 
+}
