@@ -30,6 +30,8 @@ interface ProductWithProfile {
   seller_id: string;
   status: string | null;
   created_at: string;
+  updated_at?: string;
+  featured?: boolean;
   profiles?: {
     full_name: string;
     avatar_url: string;
@@ -46,9 +48,12 @@ const FeaturedAutomations = () => {
       try {
         const { data } = await productService.getProducts();
         // Filter out any products with errors and ensure proper typing
-        const validProducts = (data || []).filter((product): product is ProductWithProfile => 
-          product && typeof product === 'object' && 'id' in product
-        );
+        const validProducts = (data || []).filter((product: any): product is ProductWithProfile => {
+          return product && 
+                 typeof product === 'object' && 
+                 'id' in product && 
+                 (!product.profiles || (product.profiles && 'full_name' in product.profiles));
+        });
         setProducts(validProducts);
       } catch (error) {
         console.error('Error fetching products:', error);

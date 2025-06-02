@@ -47,7 +47,7 @@ export function RealTimeToast({
           }
 
           // Handle postgres_changes payload structure
-          const record = payload.new || payload.old || {};
+          const record = payload?.new || payload?.old || {};
           const description = record?.title || record?.name || 'Real-time update received';
 
           toast(message, {
