@@ -53,6 +53,7 @@ export function CreateAutomation() {
       toast.success('Automation created successfully');
 
       try {
+        console.log('Attempting to send data to webhook:', automation);
         const response = await fetch(WEBHOOK_URL, {
           method: 'POST',
           headers: {
@@ -60,6 +61,8 @@ export function CreateAutomation() {
           },
           body: JSON.stringify(automation),
         });
+
+        console.log('Webhook response:', response);
 
         if (!response.ok) {
           console.error('Webhook failed to send data:', response.status, response.statusText);
