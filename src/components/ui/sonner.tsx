@@ -1,10 +1,12 @@
 
-import { Toaster, toast } from "sonner";
+
+import { Toaster as SonnerToaster, toast } from "sonner";
 
 export { toast };
 
 export function Sonner() {
   return (
-    <Toaster />
+    <SonnerToaster />
   );
 }
+
