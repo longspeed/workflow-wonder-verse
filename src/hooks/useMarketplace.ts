@@ -1,27 +1,10 @@
-
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-export interface Automation {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  currency: string;
-  rating: number;
-  download_count: number;
-  category: string;
-  tags: string[];
-  image_urls: string[];
-  demo_url: string;
-  documentation_url: string;
-  seller_id: string;
-  status: string;
-  created_at: string;
-  name?: string;
-}
+import { useInView } from 'react-intersection-observer';
+import { automationService } from '@/services/supabase';
+import type { Automation } from '@/types/automation';
 
 export interface AutomationFilters {
   category?: string;
@@ -30,7 +13,9 @@ export interface AutomationFilters {
   tags?: string[];
   search?: string;
   sortBy?: string;
-  sortOrder?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
 }
 
 export interface Purchase {
@@ -57,64 +42,103 @@ export interface Review {
   created_at: string;
 }
 
+const ITEMS_PER_PAGE = 12;
+
 export function useMarketplace() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { ref, inView } = useInView();
   const [filters, setFilters] = useState<AutomationFilters>({});
 
-  // Optimized automations query with proper pagination
-  const { data: automations, isLoading: isLoadingAutomations, error: automationsError } = useQuery({
-    queryKey: ['automations', filters],
+  // Fetch featured automations with caching
+  const { data: featuredAutomations, isLoading: isLoadingFeatured } = useQuery({
+    queryKey: ['featured-automations'],
     queryFn: async () => {
-      let query = supabase
-        .from('products')
-        .select('*', { count: 'exact' })
-        .eq('status', 'published');
-
-      if (filters.category) {
-        query = query.eq('category', filters.category);
-      }
-
-      if (filters.price) {
-        query = query.lte('price', parseFloat(filters.price));
-      }
-
-      if (filters.rating) {
-        query = query.gte('rating', parseFloat(filters.rating));
-      }
-
-      if (filters.tags?.length) {
-        query = query.contains('tags', filters.tags);
-      }
-
-      if (filters.search) {
-        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
-      }
-
-      if (filters.sortBy) {
-        const order = filters.sortOrder || 'desc';
-        query = query.order(filters.sortBy, { ascending: order === 'asc' });
-      }
-
-      // Add pagination (default to first 20 items)
-      query = query.range(0, 19);
-
-      const { data, error, count } = await query;
-
+      const { data, error } = await automationService.getFeaturedAutomations();
       if (error) throw error;
-      return {
-        items: data?.map(product => ({
-          ...product,
-          name: product.title
-        })) as Automation[],
-        totalCount: count || 0
-      };
+      return data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Optimized purchases query
+  // Fetch categories with caching
+  const { data: categories, isLoading: isLoadingCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data, error } = await automationService.getCategories();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 30 * 60 * 1000, // Cache for 30 minutes
+  });
+
+  // Infinite query for paginated automations
+  const {
+    data: automationsPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingAutomations,
+    error: automationsError,
+  } = useInfiniteQuery({
+    queryKey: ['automations'],
+    queryFn: async ({ pageParam = 0 }) => {
+      const { data, error } = await automationService.getAutomations({
+        page: pageParam,
+        limit: ITEMS_PER_PAGE,
+      });
+      if (error) throw error;
+      return data;
+    },
+    getNextPageParam: (lastPage, pages) => {
+      if (lastPage.length < ITEMS_PER_PAGE) return undefined;
+      return pages.length;
+    },
+    staleTime: 60 * 1000, // Cache for 1 minute
+  });
+
+  // Load more when reaching the end
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Prefetch next page
+  useEffect(() => {
+    if (hasNextPage) {
+      const nextPage = automationsPages?.pages.length || 0;
+      queryClient.prefetchInfiniteQuery({
+        queryKey: ['automations'],
+        queryFn: async () => {
+          const { data, error } = await automationService.getAutomations({
+            page: nextPage,
+            limit: ITEMS_PER_PAGE,
+          });
+          if (error) throw error;
+          return data;
+        },
+      });
+    }
+  }, [hasNextPage, automationsPages?.pages.length, queryClient]);
+
+  // Search automations with debouncing
+  const searchAutomations = async (query: string) => {
+    if (!query.trim()) return;
+    
+    const { data, error } = await automationService.searchAutomations(query);
+    if (error) throw error;
+    return data;
+  };
+
+  // Get automations by category with caching
+  const getAutomationsByCategory = async (category: string) => {
+    const { data, error } = await automationService.getAutomationsByCategory(category);
+    if (error) throw error;
+    return data;
+  };
+
+  // Optimized purchases query with better caching
   const { data: purchases, isLoading: isLoadingPurchases, error: purchasesError } = useQuery({
     queryKey: ['purchases'],
     queryFn: async () => {
@@ -125,17 +149,19 @@ export function useMarketplace() {
         .from('user_purchases')
         .select(`
           *,
-          automation:products(*)
+          automation:automations(*)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50); // Limit to recent purchases
+        .limit(50);
 
       if (error) throw error;
       return data as any[];
     },
     enabled: !!supabase.auth.getUser(),
     staleTime: 10 * 60 * 1000, // 10 minutes
+    cacheTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
   });
 
   // Mock favorites with proper error handling
@@ -148,14 +174,14 @@ export function useMarketplace() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Enhanced purchase mutation with optimistic updates
+  // Enhanced purchase mutation with optimistic updates and better error handling
   const purchaseMutation = useMutation({
     mutationFn: async (automationId: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       const { data: automation, error: automationError } = await supabase
-        .from('products')
+        .from('automations')
         .select('*')
         .eq('id', automationId)
         .single();
@@ -167,7 +193,7 @@ export function useMarketplace() {
         .from('user_purchases')
         .insert({
           user_id: user.id,
-          product_id: automationId,
+          automation_id: automationId,
           purchase_price: automation.price
         })
         .select()
@@ -176,22 +202,42 @@ export function useMarketplace() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      // Optimistic update
-      queryClient.invalidateQueries({ queryKey: ['purchases'] });
-      
-      toast({
-        title: 'Purchase Successful',
-        description: 'You can now access your purchased automation.'
-      });
+    onMutate: async (automationId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['purchases'] });
+
+      // Snapshot the previous value
+      const previousPurchases = queryClient.getQueryData(['purchases']);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['purchases'], (old: any[] = []) => [
+        {
+          id: 'temp-' + Date.now(),
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          automation_id: automationId,
+          purchase_price: 0,
+          created_at: new Date().toISOString(),
+          automation: { id: automationId }
+        },
+        ...old
+      ]);
+
+      return { previousPurchases };
     },
-    onError: (error: Error) => {
-      console.error('Purchase error:', error);
+    onError: (err, newPurchase, context) => {
+      // Rollback on error
+      if (context?.previousPurchases) {
+        queryClient.setQueryData(['purchases'], context.previousPurchases);
+      }
       toast({
         title: 'Purchase Failed',
-        description: error.message || 'An unexpected error occurred',
+        description: err.message || 'An unexpected error occurred',
         variant: 'destructive'
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ['purchases'] });
     }
   });
 
@@ -249,15 +295,23 @@ export function useMarketplace() {
   });
 
   return {
-    automations: automations?.items || [],
-    totalCount: automations?.totalCount || 0,
+    featuredAutomations,
+    isLoadingFeatured,
+    categories,
+    isLoadingCategories,
+    automations: automationsPages?.pages.flat() || [],
+    isLoadingAutomations,
+    automationsError,
+    isFetchingNextPage,
+    hasNextPage,
+    loadMoreRef: ref,
+    searchAutomations,
+    getAutomationsByCategory,
     purchases,
     favorites,
-    isLoadingAutomations,
     isLoadingPurchases,
     isLoadingFavorites,
     errors: {
-      automations: automationsError,
       purchases: purchasesError,
     },
     filters,

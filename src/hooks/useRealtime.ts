@@ -1,6 +1,5 @@
-
 import { useEffect } from 'react';
-import { realtimeService } from '@/services/supabase';
+import { realtimeService, automationService } from '@/services/supabase';
 
 export const useRealtimeProducts = (callback: (payload: any) => void) => {
   useEffect(() => {
@@ -30,4 +29,11 @@ export const useRealtimeAuth = (callback: (payload: any) => void) => {
       subscription.unsubscribe();
     };
   }, [callback]);
+};
+
+export const useRealtimeAutomations = (callback: (payload: any) => void) => {
+  const channel = automationService.subscribeToAutomations(callback);
+  return () => {
+    channel.unsubscribe();
+  };
 };

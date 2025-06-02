@@ -9,144 +9,167 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      products: {
+      automations: {
         Row: {
-          category: string
-          created_at: string
-          currency: string | null
-          demo_url: string | null
+          id: string
+          seller_id: string
+          name: string
           description: string | null
-          documentation_url: string | null
-          download_count: number | null
-          featured: boolean | null
-          id: string
-          image_urls: string[] | null
-          price: number
-          rating: number | null
-          seller_id: string
-          status: string | null
-          tags: string[] | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
           category: string
-          created_at?: string
-          currency?: string | null
-          demo_url?: string | null
-          description?: string | null
-          documentation_url?: string | null
-          download_count?: number | null
-          featured?: boolean | null
-          id?: string
-          image_urls?: string[] | null
           price: number
-          rating?: number | null
-          seller_id: string
-          status?: string | null
-          tags?: string[] | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          currency?: string | null
-          demo_url?: string | null
-          description?: string | null
-          documentation_url?: string | null
-          download_count?: number | null
-          featured?: boolean | null
-          id?: string
-          image_urls?: string[] | null
-          price?: number
-          rating?: number | null
-          seller_id?: string
-          status?: string | null
-          tags?: string[] | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          bio: string | null
-          company: string | null
+          currency: string | null
+          rating: number | null
+          download_count: number | null
+          tags: string[] | null
+          image_urls: string[] | null
+          demo_url: string | null
+          documentation_url: string | null
           created_at: string
-          full_name: string | null
-          id: string
-          is_seller: boolean | null
-          location: string | null
-          seller_verified: boolean | null
           updated_at: string
-          username: string | null
-          website: string | null
+          featured: boolean | null
+          status: string | null
         }
         Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          company?: string | null
+          id?: string
+          seller_id: string
+          name: string
+          description?: string | null
+          category: string
+          price: number
+          currency?: string | null
+          rating?: number | null
+          download_count?: number | null
+          tags?: string[] | null
+          image_urls?: string[] | null
+          demo_url?: string | null
+          documentation_url?: string | null
           created_at?: string
-          full_name?: string | null
-          id: string
-          is_seller?: boolean | null
-          location?: string | null
-          seller_verified?: boolean | null
           updated_at?: string
-          username?: string | null
-          website?: string | null
+          featured?: boolean | null
+          status?: string | null
         }
         Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          company?: string | null
-          created_at?: string
-          full_name?: string | null
           id?: string
-          is_seller?: boolean | null
-          location?: string | null
-          seller_verified?: boolean | null
+          seller_id?: string
+          name?: string
+          description?: string | null
+          category?: string
+          price?: number
+          currency?: string | null
+          rating?: number | null
+          download_count?: number | null
+          tags?: string[] | null
+          image_urls?: string[] | null
+          demo_url?: string | null
+          documentation_url?: string | null
+          created_at?: string
           updated_at?: string
-          username?: string | null
-          website?: string | null
-        }
-        Relationships: []
-      }
-      user_purchases: {
-        Row: {
-          created_at: string
-          id: string
-          product_id: string
-          purchase_date: string
-          purchase_price: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          product_id: string
-          purchase_date?: string
-          purchase_price?: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          product_id?: string
-          purchase_date?: string
-          purchase_price?: number
-          user_id?: string
+          featured?: boolean | null
+          status?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "user_purchases_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "automations_seller_id_fkey"
+            columns: ["seller_id"]
             isOneToOne: false
-            referencedRelation: "products"
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      profiles: {
+        Row: {
+          id: string
+          full_name: string | null
+          avatar_url: string | null
+          bio: string | null
+          company: string | null
+          location: string | null
+          website: string | null
+          username: string | null
+          is_seller: boolean | null
+          seller_verified: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          full_name?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
+          location?: string | null
+          website?: string | null
+          username?: string | null
+          is_seller?: boolean | null
+          seller_verified?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          full_name?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
+          location?: string | null
+          website?: string | null
+          username?: string | null
+          is_seller?: boolean | null
+          seller_verified?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      user_purchases: {
+        Row: {
+          id: string
+          user_id: string
+          automation_id: string
+          purchase_price: number
+          purchase_date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          automation_id: string
+          purchase_price?: number
+          purchase_date?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          automation_id?: string
+          purchase_price?: number
+          purchase_date?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_purchases_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "automations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
         ]
       }
     }

@@ -1,69 +1,73 @@
 # Workflow Wonder Verse
 
-A modern marketplace for AI automation tools built with Next.js, Supabase, and Tailwind CSS.
+A modern marketplace for workflow automations, built with React, TypeScript, and Supabase.
 
 ## Features
 
-- 🔐 Authentication with Supabase Auth
-- 🛍️ Marketplace for AI automations
-- 👤 User roles (Buyer, Seller, Admin)
-- 💰 Secure payment processing
-- ⭐ Favorites and reviews system
-- 📊 Dashboard for users and sellers
-- 🎨 Modern UI with Tailwind CSS
+- 🚀 Real-time updates and notifications
+- 💳 Secure payment processing
+- 📊 Advanced analytics dashboard
+- ⭐ Review and rating system
+- 💬 Real-time support chat
+- 🔍 Advanced search and filtering
+- 📱 Responsive design
+- 🌙 Dark mode support
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14, React, TypeScript
-- **Styling**: Tailwind CSS, shadcn/ui
+- **Frontend**: React, TypeScript, Tailwind CSS
+- **State Management**: React Query, Zustand
 - **Backend**: Supabase (PostgreSQL, Auth, Storage)
-- **Testing**: Jest, React Testing Library
+- **UI Components**: Shadcn/ui
+- **Animations**: Framer Motion
+- **Forms**: React Hook Form
+- **Notifications**: Sonner
+- **Charts**: Recharts
 
 ## Getting Started
 
+### Prerequisites
+
+- Node.js 18+ and npm
+- Supabase account
+- Git
+
+### Installation
+
 1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/workflow-wonder-verse.git
-cd workflow-wonder-verse
-```
+   ```bash
+   git clone https://github.com/yourusername/workflow-wonder-verse.git
+   cd workflow-wonder-verse
+   ```
 
 2. Install dependencies:
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-3. Set up environment variables:
-Create a `.env.local` file with the following variables:
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+3. Create a `.env` file in the root directory with your Supabase credentials:
+   ```
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-4. Run the development server:
-```bash
-npm run dev
-```
-
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Development
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run test` - Run tests
-- `npm run test:watch` - Run tests in watch mode
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
 ## Project Structure
 
 ```
 src/
-├── app/              # Next.js app directory
-├── components/       # React components
-├── integrations/     # Third-party integrations
-├── lib/             # Utility functions
-└── types/           # TypeScript types
+├── components/     # Reusable UI components
+├── hooks/         # Custom React hooks
+├── integrations/  # Third-party service integrations
+├── lib/          # Utility functions and constants
+├── pages/        # Page components
+├── services/     # API and service functions
+├── styles/       # Global styles
+└── types/        # TypeScript type definitions
 ```
 
 ## Contributing
@@ -80,7 +84,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- [Supabase](https://supabase.io/) for the backend infrastructure
-- [Tailwind CSS](https://tailwindcss.com/) for the styling
-- [React](https://reactjs.org/) for the frontend framework
-- [TypeScript](https://www.typescriptlang.org/) for type safety
+- [Shadcn/ui](https://ui.shadcn.com/) for the beautiful UI components
+- [Supabase](https://supabase.com/) for the backend infrastructure
+- [React Query](https://tanstack.com/query/latest) for data fetching and caching
+- [Framer Motion](https://www.framer.com/motion/) for smooth animations
