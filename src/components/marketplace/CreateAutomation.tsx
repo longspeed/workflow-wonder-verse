@@ -22,6 +22,8 @@ const CATEGORIES = [
   'Other',
 ];
 
+const WEBHOOK_URL = 'https://nguyenngocson.app.n8n.cloud/webhook-test/fdcc6b6c-7172-4312-a3f7-382e379939d9';
+
 export function CreateAutomation() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -46,9 +48,30 @@ export function CreateAutomation() {
       if (error) throw error;
       return automation;
     },
-    onSuccess: () => {
+    onSuccess: async (automation) => {
       queryClient.invalidateQueries({ queryKey: ['seller-automations'] });
       toast.success('Automation created successfully');
+
+      try {
+        const response = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(automation),
+        });
+
+        if (!response.ok) {
+          console.error('Webhook failed to send data:', response.status, response.statusText);
+          toast.warning('Automation created, but failed to notify webhook.');
+        } else {
+          console.log('Webhook successfully notified');
+        }
+      } catch (error) {
+        console.error('Error sending data to webhook:', error);
+        toast.warning('Automation created, but encountered an error sending data to webhook.');
+      }
+
       navigate('/dashboard/automations');
     },
     onError: (error: Error) => {
