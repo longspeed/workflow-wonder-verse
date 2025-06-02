@@ -47,7 +47,7 @@ export function RealTimeToast({
           }
 
           toast(message, {
-            description: payload.new?.title || payload.new?.name || 'Real-time update received',
+            description: payload.new?.title || payload.new?.name || payload.old?.title || payload.old?.name || 'Real-time update received',
             icon: icon,
           });
 
