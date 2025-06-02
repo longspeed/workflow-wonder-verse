@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 import { Toaster as Sonner } from 'sonner';
 import { useTheme } from '@/hooks/useTheme';
-
+import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 const ToastProvider = ToastPrimitives.Provider
@@ -40,20 +40,48 @@ const toastVariants = cva(
   }
 )
 
-const Toast = React.forwardRef<
-  React.ElementRef<typeof ToastPrimitives.Root>,
-  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
-    VariantProps<typeof toastVariants>
->(({ className, variant, ...props }, ref) => {
+const Toast = ({ message, type = "info", onClose, duration = 3000 }: ToastProps) => {
+  React.useEffect(() => {
+    const timer = setTimeout(onClose, duration)
+    return () => clearTimeout(timer)
+  }, [duration, onClose])
+
+  const variants = {
+    initial: { opacity: 0, y: 50, scale: 0.3 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, scale: 0.5, transition: { duration: 0.2 } }
+  }
+
+  const typeStyles = {
+    success: "bg-green-50 border-green-200 text-green-800",
+    error: "bg-red-50 border-red-200 text-red-800",
+    info: "bg-blue-50 border-blue-200 text-blue-800",
+    warning: "bg-yellow-50 border-yellow-200 text-yellow-800"
+  }
+
   return (
-    <ToastPrimitives.Root
-      ref={ref}
-      className={cn(toastVariants({ variant }), className)}
-      {...props}
-    />
+    <AnimatePresence>
+      <motion.div
+        variants={variants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className={cn(
+          "fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg border p-4 shadow-lg",
+          typeStyles[type]
+        )}
+      >
+        <span className="text-sm font-medium">{message}</span>
+        <button
+          onClick={onClose}
+          className="ml-4 rounded-full p-1 hover:bg-black/5 transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </motion.div>
+    </AnimatePresence>
   )
-})
-Toast.displayName = ToastPrimitives.Root.displayName
+}
 
 const ToastAction = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Action>,

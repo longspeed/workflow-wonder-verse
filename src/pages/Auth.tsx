@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import { validatePassword, checkAuthRateLimit, SessionManager } from '@/lib/auth-utils';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -20,12 +20,15 @@ const Auth = () => {
     password: '',
     fullName: '',
   });
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const sessionManager = new SessionManager();
 
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
       navigate('/dashboard');
     }
+    return () => sessionManager.cleanup();
   }, [user, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,6 +36,12 @@ const Auth = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+    
+    // Validate password in real-time
+    if (e.target.name === 'password') {
+      const { errors } = validatePassword(e.target.value);
+      setPasswordErrors(errors);
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -40,6 +49,29 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Check rate limit
+      const isAllowed = await checkAuthRateLimit(formData.email);
+      if (!isAllowed) {
+        toast({
+          title: "Too many attempts",
+          description: "Please try again later.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate password
+      const { isValid, errors } = validatePassword(formData.password);
+      if (!isValid) {
+        setPasswordErrors(errors);
+        toast({
+          title: "Invalid password",
+          description: errors.join(', '),
+          variant: "destructive",
+        });
+        return;
+      }
+
       const redirectUrl = `${window.location.origin}/dashboard`;
       
       const { data, error } = await supabase.auth.signUp({
@@ -64,6 +96,7 @@ const Auth = () => {
           title: "Account created successfully!",
           description: "Please check your email to verify your account.",
         });
+        sessionManager.startSession();
       }
     } catch (error) {
       toast({
@@ -81,6 +114,17 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Check rate limit
+      const isAllowed = await checkAuthRateLimit(formData.email);
+      if (!isAllowed) {
+        toast({
+          title: "Too many attempts",
+          description: "Please try again later.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -97,6 +141,7 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
+        sessionManager.startSession();
         navigate('/dashboard');
       }
     } catch (error) {
@@ -111,112 +156,96 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-yellow-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white border-yellow-200">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-yellow-900">Welcome to AutomateAI</CardTitle>
-          <CardDescription className="text-yellow-700">
-            Join the leading marketplace for AI automation tools
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Welcome to Workflow Wonder Verse</CardTitle>
+          <CardDescription>
+            Sign in to your account or create a new one
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-yellow-100">
-              <TabsTrigger value="signin" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-yellow-900">Sign In</TabsTrigger>
-              <TabsTrigger value="signup" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-yellow-900">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
             
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email" className="text-yellow-900">Email</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id="signin-email"
+                    id="email"
                     name="email"
                     type="email"
-                    placeholder="Enter your email"
+                    required
                     value={formData.email}
                     onChange={handleInputChange}
-                    required
-                    className="border-yellow-300 focus:border-yellow-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password" className="text-yellow-900">Password</Label>
+                  <Label htmlFor="password">Password</Label>
                   <Input
-                    id="signin-password"
+                    id="password"
                     name="password"
                     type="password"
-                    placeholder="Enter your password"
+                    required
                     value={formData.password}
                     onChange={handleInputChange}
-                    required
-                    className="border-yellow-300 focus:border-yellow-500"
                   />
                 </div>
-                <Button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-yellow-900" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    'Sign In'
-                  )}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Sign In
                 </Button>
               </form>
             </TabsContent>
-            
+
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name" className="text-yellow-900">Full Name</Label>
+                  <Label htmlFor="fullName">Full Name</Label>
                   <Input
-                    id="signup-name"
+                    id="fullName"
                     name="fullName"
-                    type="text"
-                    placeholder="Enter your full name"
+                    required
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    required
-                    className="border-yellow-300 focus:border-yellow-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="text-yellow-900">Email</Label>
+                  <Label htmlFor="signup-email">Email</Label>
                   <Input
                     id="signup-email"
                     name="email"
                     type="email"
-                    placeholder="Enter your email"
+                    required
                     value={formData.email}
                     onChange={handleInputChange}
-                    required
-                    className="border-yellow-300 focus:border-yellow-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="text-yellow-900">Password</Label>
+                  <Label htmlFor="signup-password">Password</Label>
                   <Input
                     id="signup-password"
                     name="password"
                     type="password"
-                    placeholder="Create a password"
+                    required
                     value={formData.password}
                     onChange={handleInputChange}
-                    required
-                    className="border-yellow-300 focus:border-yellow-500"
                   />
-                </div>
-                <Button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-yellow-900" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    'Create Account'
+                  {passwordErrors.length > 0 && (
+                    <ul className="text-sm text-red-500 list-disc list-inside">
+                      {passwordErrors.map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
                   )}
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Sign Up
                 </Button>
               </form>
             </TabsContent>

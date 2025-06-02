@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, Download, User, Search } from 'lucide-react';
+import { Star, Download, User, Search, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -16,129 +14,63 @@ import { AutomationCard } from '@/components/marketplace/AutomationCard';
 import { SearchBar } from '@/components/marketplace/SearchBar';
 import { CategoryFilter } from '@/components/marketplace/CategoryFilter';
 import { SortFilter } from '@/components/marketplace/SortFilter';
+import { PriceRangeFilter } from '@/components/marketplace/PriceRangeFilter';
+import { RatingFilter } from '@/components/marketplace/RatingFilter';
+import { TagsFilter } from '@/components/marketplace/TagsFilter';
+import { SavedFilters } from '@/components/marketplace/SavedFilters';
 import { useInView } from 'react-intersection-observer';
-
-interface Automation {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  currency: string;
-  rating: number;
-  download_count: number;
-  category: string;
-  tags: string[];
-  image_urls: string[];
-  demo_url: string;
-  documentation_url: string;
-  seller_id: string;
-  status: string;
-  created_at: string;
-  profiles?: {
-    full_name: string;
-    avatar_url: string;
-  } | null;
-}
-
-const ITEMS_PER_PAGE = 20;
+import { useMarketplace } from '@/hooks/useMarketplace';
+import { useNavigate } from 'react-router-dom';
 
 const Browse = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('featured');
-  const [page, setPage] = useState(0);
+  const [priceRange, setPriceRange] = useState<string>('0-1000');
+  const [minRating, setMinRating] = useState<string>('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
-  const { ref: loadMoreRef, inView } = useInView();
 
-  // Fetch automations with pagination
-  const { data: automationsData, isLoading: isLoadingAutomations, fetchNextPage, hasNextPage, isFetchingNextPage } = useQuery({
-    queryKey: ['automations', searchTerm, selectedCategory, sortBy],
-    queryFn: async ({ pageParam = 0 }) => {
-      let query = supabase
-        .from('automations')
-        .select('*', { count: 'exact' })
-        .eq('status', 'published');
+  const {
+    automations,
+    isLoadingAutomations,
+    isFetchingNextPage,
+    hasNextPage,
+    loadMoreRef,
+    filters,
+    setFilters,
+  } = useMarketplace();
 
-      if (searchTerm) {
-        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
-      }
-
-      if (selectedCategory !== 'all') {
-        query = query.eq('category', selectedCategory);
-      }
-
-      if (sortBy === 'price_low') {
-        query = query.order('price', { ascending: true });
-      } else if (sortBy === 'price_high') {
-        query = query.order('price', { ascending: false });
-      } else if (sortBy === 'rating') {
-        query = query.order('rating', { ascending: false });
-      } else if (sortBy === 'newest') {
-        query = query.order('created_at', { ascending: false });
-      } else {
-        // featured
-        query = query.order('featured', { ascending: false }).order('rating', { ascending: false });
-      }
-
-      const start = pageParam * ITEMS_PER_PAGE;
-      const end = start + ITEMS_PER_PAGE - 1;
-      query = query.range(start, end);
-
-      const { data, error, count } = await query;
-      if (error) throw error;
-
-      return {
-        items: data || [],
-        nextPage: data?.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined,
-        totalCount: count || 0
-      };
-    },
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
-  });
-
-  // Flatten pages for virtualized list
-  const allAutomations = automationsData?.pages.flatMap(page => page.items) || [];
+  // Update filters when any filter value changes
+  useEffect(() => {
+    setFilters({
+      ...filters,
+      search: searchTerm,
+      category: selectedCategory,
+      sortBy: sortBy,
+      price: priceRange,
+      rating: minRating,
+      tags: selectedTags,
+    });
+  }, [searchTerm, selectedCategory, sortBy, priceRange, minRating, selectedTags, setFilters]);
 
   // Setup virtualizer
   const rowVirtualizer = useVirtualizer({
-    count: allAutomations.length,
+    count: automations.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => 200, []), // Estimate card height
-    overscan: 5, // Number of items to render outside of the visible area
+    estimateSize: useCallback(() => 200, []),
+    overscan: 5,
   });
 
-  // Load more when reaching the end
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  // Fetch seller profiles
-  const { data: profilesData } = useQuery({
-    queryKey: ['profiles'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*');
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const getSellerProfile = (sellerId: string) => {
-    return profilesData?.find(profile => profile.id === sellerId) || null;
-  };
-
-  const handlePurchase = async (automation: Automation) => {
+  const handlePurchase = async (automation: any) => {
     try {
       // Add purchase logic here
       toast({
         title: 'Purchase Successful',
-        description: `You have successfully purchased ${automation.title}!`
+        description: `You have successfully purchased ${automation.name}!`
       });
     } catch (error) {
       toast({
@@ -149,14 +81,23 @@ const Browse = () => {
     }
   };
 
-  const filteredCategories = [
-    { value: 'all', label: 'All Categories' },
-    { value: 'productivity', label: 'Productivity' },
-    { value: 'marketing', label: 'Marketing' },
-    { value: 'data', label: 'Data Processing' },
-    { value: 'social', label: 'Social Media' },
-    { value: 'ecommerce', label: 'E-commerce' },
-  ];
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('all');
+    setSortBy('featured');
+    setPriceRange('0-1000');
+    setMinRating('');
+    setSelectedTags([]);
+  };
+
+  const applySavedFilters = (savedFilters: any) => {
+    if (savedFilters.search) setSearchTerm(savedFilters.search);
+    if (savedFilters.category) setSelectedCategory(savedFilters.category);
+    if (savedFilters.sortBy) setSortBy(savedFilters.sortBy);
+    if (savedFilters.price) setPriceRange(savedFilters.price);
+    if (savedFilters.rating) setMinRating(savedFilters.rating);
+    if (savedFilters.tags) setSelectedTags(savedFilters.tags);
+  };
 
   if (isLoadingAutomations) {
     return <LoadingState message="Loading automations..." />;
@@ -165,11 +106,63 @@ const Browse = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col gap-4 mb-8">
-        <SearchBar value={searchTerm} onChange={setSearchTerm} />
-        <div className="flex gap-4">
-          <CategoryFilter value={selectedCategory} onChange={setSelectedCategory} />
-          <SortFilter value={sortBy} onChange={setSortBy} />
+        <div className="flex items-center gap-4">
+          <SearchBar value={searchTerm} onChange={setSearchTerm} />
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="whitespace-nowrap"
+          >
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </Button>
         </div>
+
+        {showFilters && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 border rounded-lg bg-card">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Categories</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-muted-foreground"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Clear All
+                </Button>
+              </div>
+              <CategoryFilter value={selectedCategory} onChange={setSelectedCategory} />
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Price & Rating</h3>
+              <PriceRangeFilter value={priceRange} onChange={setPriceRange} />
+              <RatingFilter value={minRating} onChange={setMinRating} />
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Tags & Sort</h3>
+              <TagsFilter value={selectedTags} onChange={setSelectedTags} />
+              <SortFilter value={sortBy} onChange={setSortBy} />
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Saved Filters</h3>
+              <SavedFilters
+                currentFilters={{
+                  search: searchTerm,
+                  category: selectedCategory,
+                  sortBy,
+                  price: priceRange,
+                  rating: minRating,
+                  tags: selectedTags,
+                }}
+                onApplyFilters={applySavedFilters}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div
@@ -187,8 +180,7 @@ const Browse = () => {
           }}
         >
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const automation = allAutomations[virtualRow.index];
-            const sellerProfile = getSellerProfile(automation.seller_id);
+            const automation = automations[virtualRow.index];
             return (
               <div
                 key={virtualRow.index}

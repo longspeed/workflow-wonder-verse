@@ -8,35 +8,19 @@ interface SkeletonProps {
   height?: string | number;
 }
 
-export const Skeleton: React.FC<SkeletonProps> = ({
+function Skeleton({
   className,
-  variant = 'text',
-  width,
-  height,
-}) => {
-  const baseStyles = 'animate-pulse bg-yellow-100';
-  const variantStyles = {
-    text: 'rounded',
-    circle: 'rounded-full',
-    rect: 'rounded-lg',
-  };
-
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn(
-        baseStyles,
-        variantStyles[variant],
-        className
-      )}
-      style={{
-        width: width || '100%',
-        height: height || (variant === 'text' ? '1em' : '100%'),
-      }}
-      role="status"
-      aria-label="Loading"
+      className={cn("animate-shimmer bg-gradient-to-r from-yellow-100 via-yellow-50 to-yellow-100 bg-[length:200%_100%] rounded-md", className)}
+      {...props}
     />
-  );
-};
+  )
+}
+
+export { Skeleton }
 
 export const SkeletonCard: React.FC<{ className?: string }> = ({ className }) => (
   <div className={cn('p-4 space-y-3', className)}>

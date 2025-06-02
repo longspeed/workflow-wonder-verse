@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { productService } from '@/services/supabase';
+import { automationService } from '@/services/supabase';
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -11,12 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import AutomationDetailsModal from './browse/AutomationDetailsModal';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
-interface ProductWithProfile {
+interface AutomationWithProfile {
   id: string;
-  title: string;
+  name: string;
   description: string | null;
   price: number;
   currency: string | null;
@@ -39,107 +38,93 @@ interface ProductWithProfile {
 }
 
 const FeaturedAutomations = () => {
-  const [products, setProducts] = useState<ProductWithProfile[]>([]);
-  const [selectedAutomation, setSelectedAutomation] = useState<ProductWithProfile | null>(null);
+  const [automations, setAutomations] = useState<AutomationWithProfile[]>([]);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchFeaturedAutomations = async () => {
       try {
-        const { data } = await productService.getProducts();
-        // Filter and transform products to ensure proper typing
-        const validProducts = (data || [])
-          .filter((product: any) => {
-            return product && 
-                   typeof product === 'object' && 
-                   'id' in product;
-          })
-          .map((product: any): ProductWithProfile => {
-            // Handle the case where profiles might be an error object
-            const validProfiles = product.profiles && 
-                                 typeof product.profiles === 'object' && 
-                                 'full_name' in product.profiles &&
-                                 'avatar_url' in product.profiles
-                                 ? product.profiles 
-                                 : null;
-
-            return {
-              ...product,
-              profiles: validProfiles
-            };
-          });
+        const { data, error } = await automationService.getFeaturedAutomations();
         
-        setProducts(validProducts);
+        if (error) {
+          console.error('Error fetching featured automations:', error);
+          return;
+        }
+
+        setAutomations(data as AutomationWithProfile[] || []);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching featured automations:', error);
       }
     };
 
-    fetchProducts();
+    fetchFeaturedAutomations();
   }, []);
 
-  const handlePurchase = (automation: ProductWithProfile) => {
+  const handlePurchase = (automation: AutomationWithProfile) => {
     if (user) {
-      alert(`Purchasing ${automation.title} for $${automation.price}`);
+      alert(`Purchasing ${automation.name} for $${automation.price}`);
     } else {
       alert('Please log in to purchase');
     }
+  };
+
+  const handleViewDetails = (automationId: string) => {
+    navigate(`/automations/${automationId}`);
   };
 
   return (
     <div className="container py-12">
       <h2 className="text-3xl font-bold mb-8 text-center">Featured Automations</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map(product => (
-          <Card key={product.id}>
+        {automations.map(automation => (
+          <Card 
+            key={automation.id} 
+            className="cursor-pointer hover:shadow-lg transition-shadow duration-300"
+            onClick={() => handleViewDetails(automation.id)}
+          >
             <CardHeader>
-              <CardTitle>{product.title}</CardTitle>
-              <CardDescription>{product.description?.slice(0, 100)}...</CardDescription>
+              <div className="relative aspect-video mb-4 rounded-lg overflow-hidden">
+                 <img
+                  src={automation.image_urls?.[0] || '/placeholder.png'}
+                  alt={automation.name}
+                  className="rounded-md mb-4 w-full h-48 object-cover"
+                 />
+              </div>
+              <CardTitle>{automation.name}</CardTitle>
+              <CardDescription>{automation.description?.slice(0, 100)}...</CardDescription>
             </CardHeader>
             <CardContent>
-              {product.image_urls && product.image_urls.length > 0 && (
-                <img
-                  src={product.image_urls[0]}
-                  alt={product.title}
-                  className="rounded-md mb-4 w-full h-48 object-cover"
-                />
-              )}
               <div className="flex flex-wrap gap-2 mb-2">
-                {product.tags?.slice(0, 3).map((tag, index) => (
+                {automation.tags?.slice(0, 3).map((tag, index) => (
                   <Badge key={index} variant="default" className="text-xs">
                     {tag}
                   </Badge>
                 ))}
               </div>
               <div className="text-2xl font-semibold">
-                {product.price === 0 ? 'Free' : `$${product.price}`}
+                {automation.price === 0 ? 'Free' : `$${automation.price.toFixed(2)}`}
               </div>
             </CardContent>
             <CardFooter className="flex justify-between items-center">
               <div>
-                <Badge variant="default">{product.category}</Badge>
+                <Badge variant="default">{automation.category}</Badge>
               </div>
-              <Button 
+               <Button 
                 variant="default" 
                 size="sm" 
                 className="w-full"
-                onClick={() => setSelectedAutomation(product)}
+                onClick={(e) => {
+                   e.stopPropagation();
+                   handlePurchase(automation);
+                }}
               >
-                View Details
+                Purchase
               </Button>
             </CardFooter>
           </Card>
         ))}
       </div>
-
-      {selectedAutomation && (
-        <AutomationDetailsModal
-          automation={selectedAutomation}
-          isOpen={true}
-          onClose={() => setSelectedAutomation(null)}
-          onPurchase={handlePurchase}
-        />
-      )}
     </div>
   );
 };

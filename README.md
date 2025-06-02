@@ -4,33 +4,32 @@ A modern marketplace for workflow automations, built with React, TypeScript, and
 
 ## Features
 
-- 🚀 Real-time updates and notifications
-- 💳 Secure payment processing
-- 📊 Advanced analytics dashboard
-- ⭐ Review and rating system
-- 💬 Real-time support chat
-- 🔍 Advanced search and filtering
-- 📱 Responsive design
-- 🌙 Dark mode support
+- 🎨 Modern, responsive UI with smooth animations
+- 🔐 Secure authentication and authorization
+- 📱 Mobile-first design
+- 🚀 Offline capabilities with service workers
+- 🎯 Role-based access control
+- 📊 Interactive dashboard
+- 🔄 Real-time updates
+- 🎭 Dark/Light theme support
 
 ## Tech Stack
 
 - **Frontend**: React, TypeScript, Tailwind CSS
-- **State Management**: React Query, Zustand
-- **Backend**: Supabase (PostgreSQL, Auth, Storage)
-- **UI Components**: Shadcn/ui
-- **Animations**: Framer Motion
-- **Forms**: React Hook Form
-- **Notifications**: Sonner
-- **Charts**: Recharts
+- **State Management**: React Query
+- **Authentication**: Supabase Auth
+- **Database**: Supabase
+- **UI Components**: Radix UI, Framer Motion
+- **Styling**: Tailwind CSS
+- **Testing**: Vitest, Testing Library
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js (v16 or higher)
+- npm or yarn
 - Supabase account
-- Git
 
 ### Installation
 
@@ -45,8 +44,8 @@ A modern marketplace for workflow automations, built with React, TypeScript, and
    npm install
    ```
 
-3. Create a `.env` file in the root directory with your Supabase credentials:
-   ```
+3. Create a `.env` file in the root directory and add your Supabase credentials:
+   ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
@@ -62,12 +61,10 @@ A modern marketplace for workflow automations, built with React, TypeScript, and
 src/
 ├── components/     # Reusable UI components
 ├── hooks/         # Custom React hooks
-├── integrations/  # Third-party service integrations
-├── lib/          # Utility functions and constants
-├── pages/        # Page components
-├── services/     # API and service functions
-├── styles/       # Global styles
-└── types/        # TypeScript type definitions
+├── lib/           # Utility functions and configurations
+├── pages/         # Page components
+├── styles/        # Global styles and Tailwind config
+└── types/         # TypeScript type definitions
 ```
 
 ## Contributing
@@ -84,7 +81,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- [Shadcn/ui](https://ui.shadcn.com/) for the beautiful UI components
-- [Supabase](https://supabase.com/) for the backend infrastructure
-- [React Query](https://tanstack.com/query/latest) for data fetching and caching
-- [Framer Motion](https://www.framer.com/motion/) for smooth animations
+- [React](https://reactjs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Supabase](https://supabase.io/)
+- [Framer Motion](https://www.framer.com/motion/)
+- [Radix UI](https://www.radix-ui.com/)

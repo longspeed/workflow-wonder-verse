@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { automationService, storageService } from '@/services/supabase';
+import { storageService } from '@/services/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +23,7 @@ const CATEGORIES = [
 ];
 
 const WEBHOOK_URL = 'https://nguyenngocson.app.n8n.cloud/webhook-test/fdcc6b6c-7172-4312-a3f7-382e379939d9';
+const CREATE_AUTOMATION_API_URL = '/api/create-automation';
 
 export function CreateAutomation() {
   const { user } = useAuth();
@@ -39,14 +40,29 @@ export function CreateAutomation() {
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      const { data: automation, error } = await automationService.createAutomation({
-        ...data,
-        seller_id: user!.id,
-        status: 'draft',
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await fetch(CREATE_AUTOMATION_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...data,
+          seller_id: user.id,
+          status: 'draft',
+        }),
       });
 
-      if (error) throw error;
-      return automation;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create automation via API');
+      }
+
+      const createdAutomation = await response.json();
+      return createdAutomation;
     },
     onSuccess: async (automation) => {
       queryClient.invalidateQueries({ queryKey: ['seller-automations'] });

@@ -1,10 +1,11 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Zap, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import AuthButton from './AuthButton';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 const Header = () => {
   const location = useLocation();
@@ -16,7 +17,11 @@ const Header = () => {
   ];
 
   return (
-    <header className="bg-white/90 backdrop-blur-md border-b border-primary/20 shadow-lg sticky top-0 z-30 transition-all duration-300">
+    <motion.header 
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      className="bg-white/90 backdrop-blur-md border-b border-primary/20 shadow-soft sticky top-0 z-30"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
         <div className="flex justify-between items-center h-24">
           {/* Logo */}
@@ -25,20 +30,28 @@ const Header = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-200 to-yellow-300 rounded-full blur-sm opacity-50 group-hover:opacity-75 transition-opacity duration-300"></div>
               <Zap className="h-12 w-12 text-primary relative transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
             </div>
-            <span className="text-3xl font-extrabold bg-gradient-to-r from-yellow-900 to-yellow-700 bg-clip-text text-transparent tracking-tight">AutomateAI</span>
+            <span className="text-3xl font-extrabold text-gradient tracking-tight">AutomateAI</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-12">
+          <nav className="hidden md:flex items-center space-x-1">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`relative text-gray-700 hover:text-primary transition-colors duration-300 px-3 py-2 font-medium smooth-motion${location.pathname === item.href ? ' text-primary' : ''}`}
+                className={cn(
+                  "nav-link",
+                  location.pathname === item.href && "nav-link-active"
+                )}
               >
                 {item.name}
                 {location.pathname === item.href && (
-                  <span className="absolute left-0 -bottom-1 w-full h-0.5 bg-gradient-to-r from-primary to-yellow-600 rounded-full transition-all duration-300" />
+                  <motion.div
+                    layoutId="nav-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-500"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
                 )}
               </Link>
             ))}
@@ -52,30 +65,36 @@ const Header = () => {
           {/* Mobile menu */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden border-primary/20 hover:border-primary/40">
-                <Menu className="h-5 w-5 text-primary" />
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent className="bg-white/95 backdrop-blur-md border-l border-primary/20">
-              <div className="flex flex-col space-y-8 mt-16">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <nav className="flex flex-col space-y-4 mt-8">
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`text-gray-700 hover:text-primary transition-colors text-lg font-medium py-3 px-4 rounded-xl smooth-motion${location.pathname === item.href ? ' text-primary bg-primary/10' : ''}`}
+                    className={cn(
+                      "text-lg font-medium transition-colors hover:text-primary",
+                      location.pathname === item.href
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    )}
                   >
                     {item.name}
                   </Link>
                 ))}
-                <div className="pt-8 border-t border-primary/20">
+                <div className="pt-4">
                   <AuthButton />
                 </div>
-              </div>
+              </nav>
             </SheetContent>
           </Sheet>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 };
 

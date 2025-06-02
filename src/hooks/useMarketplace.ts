@@ -81,19 +81,77 @@ export function useMarketplace() {
     isLoading: isLoadingAutomations,
     error: automationsError,
   } = useInfiniteQuery({
-    queryKey: ['automations'],
+    queryKey: ['automations', filters],
     queryFn: async ({ pageParam = 0 }) => {
-      const { data, error } = await automationService.getAutomations({
-        page: pageParam,
-        limit: ITEMS_PER_PAGE,
-      });
+      let query = supabase
+        .from('automations')
+        .select('*, profiles(*)', { count: 'exact' })
+        .eq('status', 'published');
+
+      // Apply search filter
+      if (filters.search) {
+        query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+      }
+
+      // Apply category filter
+      if (filters.category && filters.category !== 'all') {
+        query = query.eq('category', filters.category);
+      }
+
+      // Apply price filter
+      if (filters.price) {
+        const [min, max] = filters.price.split('-').map(Number);
+        if (!isNaN(min)) query = query.gte('price', min);
+        if (!isNaN(max)) query = query.lte('price', max);
+      }
+
+      // Apply rating filter
+      if (filters.rating) {
+        const minRating = Number(filters.rating);
+        if (!isNaN(minRating)) query = query.gte('rating', minRating);
+      }
+
+      // Apply tags filter
+      if (filters.tags?.length) {
+        query = query.contains('tags', filters.tags);
+      }
+
+      // Apply sorting
+      if (filters.sortBy) {
+        switch (filters.sortBy) {
+          case 'price_low':
+            query = query.order('price', { ascending: true });
+            break;
+          case 'price_high':
+            query = query.order('price', { ascending: false });
+            break;
+          case 'rating':
+            query = query.order('rating', { ascending: false });
+            break;
+          case 'newest':
+            query = query.order('created_at', { ascending: false });
+            break;
+          case 'featured':
+          default:
+            query = query.order('featured', { ascending: false }).order('rating', { ascending: false });
+        }
+      }
+
+      // Apply pagination
+      const start = pageParam * (filters.limit || ITEMS_PER_PAGE);
+      const end = start + (filters.limit || ITEMS_PER_PAGE) - 1;
+      query = query.range(start, end);
+
+      const { data, error, count } = await query;
       if (error) throw error;
-      return data;
+
+      return {
+        items: data || [],
+        nextPage: data?.length === (filters.limit || ITEMS_PER_PAGE) ? pageParam + 1 : undefined,
+        totalCount: count || 0
+      };
     },
-    getNextPageParam: (lastPage, pages) => {
-      if (lastPage.length < ITEMS_PER_PAGE) return undefined;
-      return pages.length;
-    },
+    getNextPageParam: (lastPage) => lastPage.nextPage,
     staleTime: 60 * 1000, // Cache for 1 minute
   });
 
@@ -102,25 +160,75 @@ export function useMarketplace() {
     if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage, filters]);
 
   // Prefetch next page
   useEffect(() => {
     if (hasNextPage) {
       const nextPage = automationsPages?.pages.length || 0;
       queryClient.prefetchInfiniteQuery({
-        queryKey: ['automations'],
+        queryKey: ['automations', filters],
         queryFn: async () => {
-          const { data, error } = await automationService.getAutomations({
-            page: nextPage,
-            limit: ITEMS_PER_PAGE,
-          });
+          let query = supabase
+            .from('automations')
+            .select('*, profiles(*)', { count: 'exact' })
+            .eq('status', 'published');
+
+          // Apply all filters and sorting (same as above)
+          if (filters.search) {
+            query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+          }
+          if (filters.category && filters.category !== 'all') {
+            query = query.eq('category', filters.category);
+          }
+          if (filters.price) {
+            const [min, max] = filters.price.split('-').map(Number);
+            if (!isNaN(min)) query = query.gte('price', min);
+            if (!isNaN(max)) query = query.lte('price', max);
+          }
+          if (filters.rating) {
+            const minRating = Number(filters.rating);
+            if (!isNaN(minRating)) query = query.gte('rating', minRating);
+          }
+          if (filters.tags?.length) {
+            query = query.contains('tags', filters.tags);
+          }
+          if (filters.sortBy) {
+            switch (filters.sortBy) {
+              case 'price_low':
+                query = query.order('price', { ascending: true });
+                break;
+              case 'price_high':
+                query = query.order('price', { ascending: false });
+                break;
+              case 'rating':
+                query = query.order('rating', { ascending: false });
+                break;
+              case 'newest':
+                query = query.order('created_at', { ascending: false });
+                break;
+              case 'featured':
+              default:
+                query = query.order('featured', { ascending: false }).order('rating', { ascending: false });
+            }
+          }
+
+          const start = nextPage * (filters.limit || ITEMS_PER_PAGE);
+          const end = start + (filters.limit || ITEMS_PER_PAGE) - 1;
+          query = query.range(start, end);
+
+          const { data, error, count } = await query;
           if (error) throw error;
-          return data;
+
+          return {
+            items: data || [],
+            nextPage: data?.length === (filters.limit || ITEMS_PER_PAGE) ? nextPage + 1 : undefined,
+            totalCount: count || 0
+          };
         },
       });
     }
-  }, [hasNextPage, automationsPages?.pages.length, queryClient]);
+  }, [hasNextPage, automationsPages?.pages.length, queryClient, filters]);
 
   // Search automations with debouncing
   const searchAutomations = async (query: string) => {
