@@ -1,6 +1,6 @@
 
-import Toaster from "sonner";
-import { toast } from "sonner";
+
+import { Toaster, toast } from "sonner";
 
 export { toast };
 
@@ -9,3 +9,4 @@ export function Sonner() {
     <Toaster />
   );
 }
+
