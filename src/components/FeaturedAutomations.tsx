@@ -14,7 +14,7 @@ import {
 import AutomationDetailsModal from './browse/AutomationDetailsModal';
 import { useAuth } from '@/hooks/useAuth';
 
-interface Product {
+interface ProductWithProfile {
   id: string;
   title: string;
   description: string | null;
@@ -37,15 +37,19 @@ interface Product {
 }
 
 const FeaturedAutomations = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedAutomation, setSelectedAutomation] = useState<Product | null>(null);
+  const [products, setProducts] = useState<ProductWithProfile[]>([]);
+  const [selectedAutomation, setSelectedAutomation] = useState<ProductWithProfile | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const { data } = await productService.getProducts();
-        setProducts(data || []);
+        // Filter out any products with errors and ensure proper typing
+        const validProducts = (data || []).filter((product): product is ProductWithProfile => 
+          product && typeof product === 'object' && 'id' in product
+        );
+        setProducts(validProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
       }
@@ -54,7 +58,7 @@ const FeaturedAutomations = () => {
     fetchProducts();
   }, []);
 
-  const handlePurchase = (automation: Product) => {
+  const handlePurchase = (automation: ProductWithProfile) => {
     if (user) {
       alert(`Purchasing ${automation.title} for $${automation.price}`);
     } else {
