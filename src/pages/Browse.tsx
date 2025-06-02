@@ -201,20 +201,7 @@ const Browse = () => {
                   transform: `translateY(${virtualRow.start}px)`,
                 }}
               >
-                <AutomationCard automation={automation} />
-                <div className="flex justify-between items-center">
-                  <div className="text-2xl font-bold text-yellow-900">
-                    ${automation.price.toFixed(2)}
-                  </div>
-                  <div className="space-x-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => handlePurchase(automation)}
-                    >
-                      Purchase
-                    </Button>
-                  </div>
-                </div>
+                <AutomationCard automation={automation} onPurchase={handlePurchase} />
               </div>
             );
           })}

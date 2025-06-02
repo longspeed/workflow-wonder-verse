@@ -6,37 +6,39 @@ import { Star, Download, User } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useToast } from '@/hooks/use-toast';
 import type { Automation } from '@/types/marketplace';
+import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 interface AutomationCardProps {
   automation: Automation;
   onPurchase?: (automation: Automation) => void;
-  onViewDetails?: (automation: Automation) => void;
 }
 
-export function AutomationCard({ automation, onPurchase, onViewDetails }: AutomationCardProps) {
+export function AutomationCard({ automation, onPurchase }: AutomationCardProps) {
   const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
 
-  const handlePurchase = () => {
+  const handlePurchaseClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation(); // Prevent card click from triggering
     if (onPurchase) {
       onPurchase(automation);
     }
   };
 
-  const handleViewDetails = () => {
-    if (onViewDetails) {
-      onViewDetails(automation);
-    }
+  const handleCardClick = () => {
+    navigate(`/automations/${automation.id}`);
   };
 
   return (
     <Card
       className={cn(
-        'transition-all duration-300 hover:shadow-lg',
+        'transition-all duration-300 hover:shadow-lg cursor-pointer',
         isHovered ? 'scale-[1.02]' : 'scale-100'
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleCardClick} // Make the whole card clickable
     >
       <CardHeader>
         <div className="relative aspect-video mb-4 rounded-lg overflow-hidden">
@@ -90,13 +92,7 @@ export function AutomationCard({ automation, onPurchase, onViewDetails }: Automa
           </div>
           <div className="space-x-2">
             <Button
-              variant="outline"
-              onClick={handleViewDetails}
-            >
-              View Details
-            </Button>
-            <Button
-              onClick={handlePurchase}
+              onClick={handlePurchaseClick} // Use the new click handler
               className="bg-yellow-600 hover:bg-yellow-700"
             >
               Purchase

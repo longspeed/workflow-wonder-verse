@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Plus, Settings, Bell, HelpCircle } from 'lucide-react';
+import { Plus, Settings, Bell, HelpCircle, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,14 +15,14 @@ export default function SellerDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
 
   // Fetch seller's automations
-  const { data: automations, isLoading: isLoadingAutomations } = useQuery({
+  const { data: automations, isLoading: isLoadingAutomations, isError: isErrorAutomations, error: automationsError } = useQuery({
     queryKey: ['seller-automations', user?.id],
     queryFn: () => automationService.getSellerAutomations(user!.id),
     enabled: !!user,
   });
 
   // Fetch recent sales
-  const { data: recentSales, isLoading: isLoadingSales } = useQuery({
+  const { data: recentSales, isLoading: isLoadingSales, isError: isErrorSales, error: salesError } = useQuery({
     queryKey: ['recent-sales', user?.id],
     queryFn: () => automationService.getRecentSales(user!.id),
     enabled: !!user,
@@ -35,6 +35,31 @@ export default function SellerDashboard() {
           <h1 className="text-2xl font-bold mb-4">Please sign in to access the seller dashboard</h1>
           <Button onClick={() => window.location.href = '/login'}>Sign In</Button>
         </div>
+      </div>
+    );
+  }
+
+  const isLoading = isLoadingAutomations || isLoadingSales;
+  const isError = isErrorAutomations || isErrorSales;
+  const errorMessage = automationsError?.message || salesError?.message || 'An unknown error occurred.';
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-lg text-muted-foreground">Loading dashboard data...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center text-red-600">
+        <AlertCircle className="h-12 w-12 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Error loading dashboard data</h2>
+        <p className="text-muted-foreground mb-4">{errorMessage}</p>
+        {/* Optionally add a retry button if the error is temporary */}
+        <Button onClick={() => window.location.reload()}>Retry</Button>
       </div>
     );
   }
@@ -102,7 +127,10 @@ export default function SellerDashboard() {
               <Card className="p-6">
                 <h3 className="text-sm font-medium text-gray-500">Average Rating</h3>
                 <p className="text-2xl font-bold mt-2">
-                  {automations?.reduce((sum, a) => sum + a.rating, 0) / automations?.length || 0}
+                  {/* TODO: Calculate average rating based on actual reviews */}
+                  {/* For now, using a placeholder or potentially calculating from available data */}
+                  {/* Example placeholder: 'N/A' */}
+                   0
                 </p>
               </Card>
             </div>
@@ -122,18 +150,18 @@ export default function SellerDashboard() {
                     <div>
                       <p className="font-medium">{sale.automation.name}</p>
                       <p className="text-sm text-gray-600">
-                        Sold to {sale.buyer.full_name}
+                        Sold on {new Date(sale.created_at).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">${sale.price.toFixed(2)}</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(sale.created_at).toLocaleDateString()}
-                      </p>
+                      <p className="font-medium">${sale.purchase_price.toFixed(2)}</p>
                     </div>
                   </motion.div>
                 ))}
               </div>
+               {recentSales?.length === 0 && (
+                <p className="text-center text-gray-500">No recent sales yet.</p>
+              )}
             </Card>
           </TabsContent>
 
@@ -158,7 +186,8 @@ export default function SellerDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="p-6">
+                  {/* TODO: Replace with optimized AutomationCard */}
+                   <Card className="p-6">
                     <div className="aspect-video rounded-lg overflow-hidden mb-4">
                       <img
                         src={automation.image_urls?.[0] || '/placeholder.png'}
@@ -176,7 +205,8 @@ export default function SellerDashboard() {
                           ${automation.price.toFixed(2)}
                         </span>
                         <span className="text-sm text-gray-500">
-                          {automation.download_count} sales
+                          {/* TODO: Display actual sales count */}
+                           {automation.download_count || 0} sales
                         </span>
                       </div>
                       <Button variant="outline" size="sm">
@@ -186,6 +216,9 @@ export default function SellerDashboard() {
                   </Card>
                 </motion.div>
               ))}
+               {automations?.length === 0 && (
+                <p className="text-center text-gray-500 col-span-full">You haven't created any automations yet.</p>
+              )}
             </div>
           </TabsContent>
 
@@ -197,7 +230,6 @@ export default function SellerDashboard() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-4">Automation</th>
-                      <th className="text-left py-3 px-4">Buyer</th>
                       <th className="text-left py-3 px-4">Date</th>
                       <th className="text-right py-3 px-4">Amount</th>
                     </tr>
@@ -206,15 +238,19 @@ export default function SellerDashboard() {
                     {recentSales?.map((sale) => (
                       <tr key={sale.id} className="border-b">
                         <td className="py-3 px-4">{sale.automation.name}</td>
-                        <td className="py-3 px-4">{sale.buyer.full_name}</td>
                         <td className="py-3 px-4">
                           {new Date(sale.created_at).toLocaleDateString()}
                         </td>
                         <td className="py-3 px-4 text-right">
-                          ${sale.price.toFixed(2)}
+                          ${sale.purchase_price.toFixed(2)}
                         </td>
                       </tr>
                     ))}
+                     {recentSales?.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="text-center py-4 text-gray-500">No sales history yet.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
