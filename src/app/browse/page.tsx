@@ -9,6 +9,7 @@ import { FilterSidebar } from '@/components/FilterSidebar';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
+import { AutomationFilters } from '@/types/automation';
 
 interface Automation {
   id: string;
@@ -31,11 +32,11 @@ interface Automation {
 
 export default function BrowsePage() {
   const router = useRouter();
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<AutomationFilters>({
     category: '',
     price: '',
     rating: '',
-    tags: [] as string[],
+    tags: [],
     search: '',
     sortBy: 'created_at',
     sortOrder: 'desc'
@@ -129,4 +130,4 @@ export default function BrowsePage() {
       </div>
     </div>
   );
-} 
+}
