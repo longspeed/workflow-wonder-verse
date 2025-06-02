@@ -19,6 +19,7 @@ model User {
   courses       Course[]  @relation("CourseInstructor")
   enrollments   Enrollment[]
   reviews       Review[]
+  automations   Automation[]
 }
 
 model Course {
@@ -75,6 +76,19 @@ model Lesson {
   order       Int
   courseId    String
   course      Course   @relation(fields: [courseId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Automation {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  trigger     String
+  action      String
+  isActive    Boolean  @default(true)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
