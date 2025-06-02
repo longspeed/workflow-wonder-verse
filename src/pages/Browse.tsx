@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -71,14 +72,19 @@ const Browse = () => {
 
       if (error) throw error;
 
-      // Type assertion with proper handling
+      // Fixed: Proper null checking for profilesData
       const typedData = (data || []).map(item => {
         const profilesData = item.profiles;
         return {
           ...item,
-          profiles: profilesData && typeof profilesData === 'object' && profilesData !== null && 'full_name' in profilesData 
-            ? (profilesData as { full_name: string; avatar_url: string })
-            : null
+          profiles: profilesData && 
+                   typeof profilesData === 'object' && 
+                   profilesData !== null && 
+                   'full_name' in profilesData ? 
+            {
+              full_name: profilesData.full_name,
+              avatar_url: profilesData.avatar_url
+            } : null
         };
       }) as Automation[];
 

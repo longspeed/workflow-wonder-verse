@@ -128,7 +128,7 @@ export type Database = {
           id?: string
           product_id: string
           purchase_date?: string
-          purchase_price: number
+          purchase_price?: number
           user_id: string
         }
         Update: {

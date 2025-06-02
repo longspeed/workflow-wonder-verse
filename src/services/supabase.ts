@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -217,6 +218,7 @@ export const storageService = {
     if (error) throw error;
   },
 
+  // Fixed: Added the required third parameter (options)
   async listFiles(bucket: string, path: string = '', options: any = {}) {
     const { data, error } = await supabase.storage
       .from(bucket)
