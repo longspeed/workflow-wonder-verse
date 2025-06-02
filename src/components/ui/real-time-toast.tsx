@@ -65,3 +65,22 @@ export function RealTimeToast({
 
   return null;
 }
+
+// Static utility methods for toast notifications
+export const RealTimeUpdateToast = {
+  updateReceived: () => {
+    toast.success('Update received', {
+      description: 'Data has been refreshed with latest changes'
+    });
+  },
+  connectionRestored: () => {
+    toast.success('Connection restored', {
+      description: 'Real-time updates are now active'
+    });
+  },
+  connectionLost: () => {
+    toast.error('Connection lost', {
+      description: 'Real-time updates are currently unavailable'
+    });
+  }
+};

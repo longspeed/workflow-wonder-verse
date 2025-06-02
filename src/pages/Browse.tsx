@@ -82,8 +82,8 @@ const Browse = () => {
                    profilesData !== null && 
                    'full_name' in profilesData ? 
             {
-              full_name: profilesData.full_name,
-              avatar_url: profilesData.avatar_url
+              full_name: profilesData.full_name || '',
+              avatar_url: profilesData.avatar_url || ''
             } : null
         };
       }) as Automation[];
@@ -323,7 +323,7 @@ const Browse = () => {
               <p className="text-yellow-800 line-clamp-2">{automation.description}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {automation.tags?.map((tag) => (
-                  <Badge key={tag} variant="outline" className="bg-yellow-50">
+                  <Badge key={tag} variant="secondary" className="bg-yellow-50">
                     {tag}
                   </Badge>
                 ))}

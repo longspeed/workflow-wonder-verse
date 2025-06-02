@@ -1,6 +1,6 @@
+
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useRealTimeManager } from './useRealTimeManager';
-import { RealTimeUpdateToast } from '@/components/ui/real-time-toast';
 import React from 'react';
 
 export interface UseEnhancedDataOptions<T> {
@@ -42,4 +42,4 @@ export function useEnhancedData<T>({
     connectionStatus,
     isConnected: connectionStatus === 'connected'
   };
-} 
+}

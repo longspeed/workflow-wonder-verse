@@ -98,7 +98,7 @@ export function AutomationCard({ automation }: AutomationCardProps) {
 
           <div className="flex flex-wrap gap-2">
             {automation.tags?.map((tag) => (
-              <Badge key={tag} variant="outline">
+              <Badge key={tag} variant="secondary">
                 {tag}
               </Badge>
             ))}

@@ -1,6 +1,7 @@
+
 import { useCallback } from 'react';
 import { useAuth } from './useAuth';
-import { useEnhancedData } from './useEnhancedData';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { withRetry } from '@/lib/retry';
@@ -91,32 +92,22 @@ export function useSellerData() {
 
   const {
     data,
-    loading,
+    isLoading,
     error,
-    lastUpdated,
-    refresh,
-    invalidate,
-  } = useEnhancedData<SellerData>({
-    key: `seller_data_${user?.id}`,
-    fetchFn: fetchSellerData,
-    ttl: 5 * 60 * 1000, // 5 minutes
-    realtime: true,
-    channel: `seller_updates_${user?.id}`,
-    onError: (error) => {
-      handleError(error, {
-        showToast: true,
-        logToConsole: true,
-      });
-    }
+    refetch,
+  } = useQuery({
+    queryKey: [`seller_data_${user?.id}`],
+    queryFn: fetchSellerData,
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   return {
     profile: data?.profile || null,
     products: data?.products || [],
-    loading,
+    loading: isLoading,
     error,
-    lastUpdated,
-    refresh,
-    invalidate,
+    refresh: refetch,
+    invalidate: refetch,
   };
-} 
+}

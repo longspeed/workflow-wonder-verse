@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealTimeUpdateToast } from '@/components/ui/real-time-toast';
@@ -109,4 +110,4 @@ export function useRealTimeManager({
     isConnected: status === 'connected',
     isError: status === 'error'
   };
-} 
+}

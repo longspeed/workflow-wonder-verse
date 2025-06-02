@@ -110,12 +110,16 @@ export function useMarketplace() {
   const { data: purchases, isLoading: isLoadingPurchases } = useQuery({
     queryKey: ['purchases'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
       const { data, error } = await supabase
         .from('user_purchases')
         .select(`
           *,
           automation:products(*)
         `)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -134,6 +138,9 @@ export function useMarketplace() {
   // Purchase automation
   const purchaseMutation = useMutation({
     mutationFn: async (automationId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const { data: automation, error: automationError } = await supabase
         .from('products')
         .select('*')
@@ -145,6 +152,7 @@ export function useMarketplace() {
       const { data, error } = await supabase
         .from('user_purchases')
         .insert({
+          user_id: user.id,
           product_id: automationId,
           purchase_price: automation.price
         })
