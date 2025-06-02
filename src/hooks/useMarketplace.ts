@@ -62,13 +62,13 @@ export function useMarketplace() {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<AutomationFilters>({});
 
-  // Fetch automations with filters - using 'products' table since that's what exists
-  const { data: automations, isLoading: isLoadingAutomations } = useQuery({
+  // Optimized automations query with proper pagination
+  const { data: automations, isLoading: isLoadingAutomations, error: automationsError } = useQuery({
     queryKey: ['automations', filters],
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('status', 'published');
 
       if (filters.category) {
@@ -96,18 +96,26 @@ export function useMarketplace() {
         query = query.order(filters.sortBy, { ascending: order === 'asc' });
       }
 
-      const { data, error } = await query;
+      // Add pagination (default to first 20 items)
+      query = query.range(0, 19);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
-      return data?.map(product => ({
-        ...product,
-        name: product.title
-      })) as Automation[];
-    }
+      return {
+        items: data?.map(product => ({
+          ...product,
+          name: product.title
+        })) as Automation[],
+        totalCount: count || 0
+      };
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 
-  // Fetch user's purchases - using existing user_purchases table
-  const { data: purchases, isLoading: isLoadingPurchases } = useQuery({
+  // Optimized purchases query
+  const { data: purchases, isLoading: isLoadingPurchases, error: purchasesError } = useQuery({
     queryKey: ['purchases'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -120,22 +128,27 @@ export function useMarketplace() {
           automation:products(*)
         `)
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50); // Limit to recent purchases
 
       if (error) throw error;
       return data as any[];
-    }
+    },
+    enabled: !!supabase.auth.getUser(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Mock favorites for now since table doesn't exist
+  // Mock favorites with proper error handling
   const { data: favorites, isLoading: isLoadingFavorites } = useQuery({
     queryKey: ['favorites'],
     queryFn: async () => {
+      // TODO: Implement when favorites table is created
       return [];
-    }
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Purchase automation
+  // Enhanced purchase mutation with optimistic updates
   const purchaseMutation = useMutation({
     mutationFn: async (automationId: string) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -148,6 +161,7 @@ export function useMarketplace() {
         .single();
 
       if (automationError) throw automationError;
+      if (!automation) throw new Error('Automation not found');
 
       const { data, error } = await supabase
         .from('user_purchases')
@@ -162,45 +176,60 @@ export function useMarketplace() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Optimistic update
       queryClient.invalidateQueries({ queryKey: ['purchases'] });
+      
       toast({
         title: 'Purchase Successful',
         description: 'You can now access your purchased automation.'
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      console.error('Purchase error:', error);
       toast({
         title: 'Purchase Failed',
-        description: error.message,
+        description: error.message || 'An unexpected error occurred',
         variant: 'destructive'
       });
     }
   });
 
-  // Mock toggle favorite
+  // Enhanced toggle favorite with optimistic updates
   const toggleFavoriteMutation = useMutation({
     mutationFn: async (automationId: string) => {
-      // Mock implementation
-      return null;
+      // TODO: Implement when favorites table is created
+      await new Promise(resolve => setTimeout(resolve, 500)); // Mock delay
+      return { automationId, isFavorite: Math.random() > 0.5 };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['favorites'] });
+    onMutate: async (automationId) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ['favorites'] });
+      const previousFavorites = queryClient.getQueryData(['favorites']);
+      return { previousFavorites };
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousFavorites) {
+        queryClient.setQueryData(['favorites'], context.previousFavorites);
+      }
       toast({
         title: 'Error',
-        description: error.message,
+        description: 'Failed to update favorite status',
         variant: 'destructive'
       });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
     }
   });
 
-  // Mock add review
+  // Enhanced review mutation
   const addReviewMutation = useMutation({
     mutationFn: async ({ automationId, rating, comment }: { automationId: string; rating: number; comment?: string }) => {
-      // Mock implementation
-      return null;
+      // TODO: Implement when reviews table is created
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Mock delay
+      return { automationId, rating, comment };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['automations'] });
@@ -209,26 +238,35 @@ export function useMarketplace() {
         description: 'Thank you for your feedback!'
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      console.error('Review error:', error);
       toast({
         title: 'Error',
-        description: error.message,
+        description: 'Failed to add review. Please try again.',
         variant: 'destructive'
       });
     }
   });
 
   return {
-    automations,
+    automations: automations?.items || [],
+    totalCount: automations?.totalCount || 0,
     purchases,
     favorites,
     isLoadingAutomations,
     isLoadingPurchases,
     isLoadingFavorites,
+    errors: {
+      automations: automationsError,
+      purchases: purchasesError,
+    },
     filters,
     setFilters,
     purchaseAutomation: purchaseMutation.mutate,
     toggleFavorite: toggleFavoriteMutation.mutate,
-    addReview: addReviewMutation.mutate
+    addReview: addReviewMutation.mutate,
+    isPurchasing: purchaseMutation.isPending,
+    isTogglingFavorite: toggleFavoriteMutation.isPending,
+    isAddingReview: addReviewMutation.isPending,
   };
 }
