@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { LoadingState } from '@/components/ui/loading-state';
 import { RealTimeUpdateIndicator } from '@/components/ui/loading-state';
 import { ConnectionStatusBadge } from '@/components/ui/connection-status';
+import { useAuth } from '@/hooks/useAuth';
+import { Navigate } from 'react-router-dom';
 
 interface Purchase {
   id: string;
@@ -24,10 +26,21 @@ interface Purchase {
 
 export default function BuyerDashboard() {
   const [activeTab, setActiveTab] = useState<'purchases' | 'favorites'>('purchases');
+  const { user, loading: authLoading } = useAuth();
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return <LoadingState message="Loading dashboard..." />;
+  }
+
+  // Redirect to auth page if user is not authenticated
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   // Fetch user's purchases
   const { data: purchases, isLoading: isLoadingPurchases } = useQuery({
-    queryKey: ['user-purchases'],
+    queryKey: ['user-purchases', user.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_purchases')
@@ -35,23 +48,26 @@ export default function BuyerDashboard() {
           *,
           product:products(*)
         `)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as Purchase[];
-    }
+    },
+    enabled: !!user // Only run query if user is authenticated
   });
 
   // Mock favorites since table doesn't exist
   const { data: favorites, isLoading: isLoadingFavorites } = useQuery({
-    queryKey: ['user-favorites'],
+    queryKey: ['user-favorites', user.id],
     queryFn: async () => {
       return [];
-    }
+    },
+    enabled: !!user // Only run query if user is authenticated
   });
 
   if (isLoadingPurchases || isLoadingFavorites) {
-    return <LoadingState message="Loading dashboard..." />;
+    return <LoadingState message="Loading dashboard data..." />;
   }
 
   return (
