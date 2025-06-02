@@ -2,6 +2,11 @@ import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
+import { setupServer } from 'msw/node';
+import { rest } from 'msw';
+import { render } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter } from 'react-router-dom';
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
@@ -53,11 +58,62 @@ vi.mock('@/components/ui/use-toast', () => ({
   }),
 }));
 
-// Cleanup after each test
+// Create a new QueryClient for each test
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
+
+// Custom render function that includes providers
+export function renderWithProviders(
+  ui: React.ReactElement,
+  {
+    route = '/',
+    ...renderOptions
+  } = {}
+) {
+  const testQueryClient = createTestQueryClient();
+  
+  function Wrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <QueryClientProvider client={testQueryClient}>
+        <BrowserRouter>
+          {children}
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+  }
+
+  return {
+    ...render(ui, { wrapper: Wrapper, ...renderOptions }),
+    testQueryClient,
+  };
+}
+
+// Mock Service Worker setup
+export const handlers = [
+  rest.get('*/api/*', (req, res, ctx) => {
+    return res(
+      ctx.status(200),
+      ctx.json({
+        data: 'mocked data',
+      })
+    );
+  }),
+];
+
+export const server = setupServer(...handlers);
+
+// Setup MSW
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
+  server.resetHandlers();
 });
+afterAll(() => server.close());
 
 // Custom matchers
 expect.extend({
@@ -77,16 +133,20 @@ expect.extend({
       };
     }
   },
+  toHaveStyleRule(received, property, value) {
+    const element = received;
+    const computedStyle = window.getComputedStyle(element);
+    const actualValue = computedStyle[property];
+    
+    return {
+      message: () =>
+        `expected ${property} to be ${value}, but got ${actualValue}`,
+      pass: actualValue === value,
+    };
+  },
 });
 
 // Test utilities
-export const renderWithProviders = (ui: React.ReactElement) => {
-  // Add your provider setup here
-  return {
-    ...render(ui),
-  };
-};
-
 export const mockUser = {
   id: 'test-user-id',
   email: 'test@example.com',
@@ -106,10 +166,6 @@ class MockIntersectionObserver {
   observe = vi.fn();
   unobserve = vi.fn();
   disconnect = vi.fn();
-  constructor(callback: IntersectionObserverCallback) {
-    this.callback = callback;
-  }
-  callback: IntersectionObserverCallback;
 }
 
 Object.defineProperty(window, 'IntersectionObserver', {
@@ -123,10 +179,6 @@ class MockResizeObserver {
   observe = vi.fn();
   unobserve = vi.fn();
   disconnect = vi.fn();
-  constructor(callback: ResizeObserverCallback) {
-    this.callback = callback;
-  }
-  callback: ResizeObserverCallback;
 }
 
 Object.defineProperty(window, 'ResizeObserver', {

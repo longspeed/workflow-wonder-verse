@@ -1,0 +1,57 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# TypeScript and React Core Rules
+
+## Objective
+Establish consistent TypeScript and React development practices across the project to ensure type safety, maintainable code, and optimal performance.
+
+## Context
+- React 18 with TypeScript
+- Vite as build tool
+- Radix UI components
+- Tailwind CSS for styling
+- React Query for data fetching
+- Zustand for state management
+
+## Rules
+
+### TypeScript Configuration
+- Use strict TypeScript configuration with `strict: true`
+- Enable `noImplicitAny` and `strictNullChecks`
+- Prefer explicit type annotations for function parameters and return types
+- Use type inference for simple variable declarations
+
+### Component Structure
+- Use functional components with TypeScript interfaces for props
+- Place components in appropriate directories:
+  - `components/` for reusable UI components
+  - `pages/` for route components
+  - `hooks/` for custom React hooks
+- Follow the naming convention: `PascalCase` for components and interfaces
+
+### Props and State Management
+- Define prop interfaces using TypeScript interfaces
+- Use React Query for server state management
+- Use Zustand for global client state
+- Prefer local state with `useState` for component-specific state
+- Document complex prop types with JSDoc comments
+
+### Code Organization
+- Keep components focused and single-responsibility
+- Extract reusable logic into custom hooks
+- Place types and interfaces in the `types/` directory
+- Use barrel exports (index.ts) for clean imports
+
+### Performance
+- Use React.memo for expensive components
+- Implement proper dependency arrays in useEffect
+- Use useCallback for memoized functions
+- Avoid unnecessary re-renders
+
+## Exceptions
+- Allow `any` type only in specific cases with proper justification
+- Use type assertions when necessary with proper type guards
+- Allow class components only for specific third-party integrations

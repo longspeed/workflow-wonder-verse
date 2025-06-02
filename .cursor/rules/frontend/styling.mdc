@@ -1,0 +1,57 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Frontend Styling Rules
+
+## Objective
+Establish consistent styling practices using Tailwind CSS and Radix UI components to create a maintainable and accessible user interface.
+
+## Context
+- Tailwind CSS for utility-first styling
+- Radix UI for accessible components
+- Custom theme configuration
+- Responsive design requirements
+
+## Rules
+
+### Tailwind CSS Usage
+- Use Tailwind utility classes for styling
+- Follow the mobile-first approach
+- Use custom theme values from `tailwind.config.js`
+- Group related utility classes logically
+- Use `@apply` directive sparingly and only in component-specific styles
+
+### Component Styling
+- Use Radix UI components as the base for custom components
+- Follow the component composition pattern
+- Maintain consistent spacing using theme values
+- Use CSS variables for dynamic theming
+- Implement dark mode support using `next-themes`
+
+### Accessibility
+- Ensure proper color contrast ratios
+- Use semantic HTML elements
+- Implement proper ARIA attributes
+- Test with screen readers
+- Maintain keyboard navigation support
+
+### Responsive Design
+- Use Tailwind's responsive prefixes
+- Design for mobile-first
+- Test on multiple viewport sizes
+- Use fluid typography and spacing
+- Implement proper touch targets
+
+### Performance
+- Minimize CSS bundle size
+- Use CSS containment where appropriate
+- Optimize critical rendering path
+- Implement proper loading states
+- Use proper image optimization
+
+## Exceptions
+- Allow custom CSS for complex animations
+- Use CSS modules for component-specific styles
+- Implement custom media queries for edge cases

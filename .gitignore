@@ -79,3 +79,25 @@ logs
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Vite
+*.local
+
+# Sentry
+.sentryclirc
+
+# Cache
+.cache
+.parcel-cache
+.next
+.nuxt
+.vuepress/dist
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*

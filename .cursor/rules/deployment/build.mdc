@@ -1,0 +1,58 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Build and Deployment Standards
+
+## Objective
+Establish consistent build and deployment practices to ensure reliable and efficient application delivery.
+
+## Context
+- Vite for build tooling
+- TypeScript compilation
+- Environment configuration
+- Performance optimization
+- Error tracking with Sentry
+
+## Rules
+
+### Build Process
+- Use Vite for development and production builds
+- Enable TypeScript compilation checks
+- Implement proper environment variable handling
+- Optimize bundle size
+- Generate source maps for production
+
+### Environment Configuration
+- Use `.env` files for environment variables
+- Implement proper environment validation
+- Keep sensitive data out of version control
+- Document required environment variables
+- Use type-safe environment configuration
+
+### Performance Optimization
+- Implement code splitting
+- Optimize asset loading
+- Use proper caching strategies
+- Minimize bundle size
+- Implement proper lazy loading
+
+### Error Tracking
+- Configure Sentry for error tracking
+- Implement proper error boundaries
+- Log errors appropriately
+- Monitor performance metrics
+- Track user interactions
+
+### Deployment
+- Implement proper CI/CD pipeline
+- Use semantic versioning
+- Document deployment process
+- Implement rollback strategy
+- Monitor deployment health
+
+## Exceptions
+- Allow development-only features
+- Document any build-time exceptions
+- Justify any performance trade-offs

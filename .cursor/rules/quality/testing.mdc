@@ -1,0 +1,58 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Testing and Quality Standards
+
+## Objective
+Establish comprehensive testing practices and code quality standards to ensure reliable and maintainable code.
+
+## Context
+- Vitest for unit and integration testing
+- React Testing Library for component testing
+- Storybook for component documentation
+- ESLint for code linting
+- TypeScript for type checking
+
+## Rules
+
+### Unit Testing
+- Write tests for all utility functions
+- Test edge cases and error scenarios
+- Use meaningful test descriptions
+- Follow the Arrange-Act-Assert pattern
+- Mock external dependencies appropriately
+
+### Component Testing
+- Test component rendering and interactions
+- Verify accessibility features
+- Test component state changes
+- Use React Testing Library queries
+- Test error boundaries and loading states
+
+### Integration Testing
+- Test component integration
+- Verify data flow between components
+- Test API integration
+- Mock API responses appropriately
+- Test error handling
+
+### Code Quality
+- Follow ESLint rules strictly
+- Maintain consistent code formatting
+- Write meaningful comments
+- Keep functions small and focused
+- Use meaningful variable names
+
+### Documentation
+- Document complex functions and components
+- Keep README up to date
+- Document API endpoints
+- Maintain component stories in Storybook
+- Document testing strategies
+
+## Exceptions
+- Skip tests for third-party code
+- Allow test file exceptions with proper justification
+- Document any skipped tests

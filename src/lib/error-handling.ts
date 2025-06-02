@@ -1,4 +1,7 @@
 import { PostgrestError } from '@supabase/supabase-js';
+import * as Sentry from '@sentry/react';
+import { BrowserTracing } from '@sentry/tracing';
+import React from 'react';
 
 interface PostgrestErrorDetails {
   column?: string;
@@ -14,42 +17,58 @@ interface ErrorDetails {
   details?: any;
 }
 
+// Initialize Sentry
+Sentry.init({
+  dsn: process.env.VITE_SENTRY_DSN,
+  integrations: [new BrowserTracing()],
+  tracesSampleRate: 1.0,
+  environment: process.env.NODE_ENV,
+});
+
+// Custom error types
 export class AppError extends Error {
   constructor(
     message: string,
-    public code?: string,
-    public status?: number,
-    public details?: ErrorDetails
+    public code: string,
+    public severity: 'error' | 'warning' | 'info' = 'error',
+    public metadata?: Record<string, any>
   ) {
     super(message);
     this.name = 'AppError';
   }
 }
 
-export class DatabaseError extends AppError {
-  constructor(message: string, code?: string, details?: ErrorDetails) {
-    super(message, code, 500, details);
-    this.name = 'DatabaseError';
+export class NetworkError extends AppError {
+  constructor(message: string, metadata?: Record<string, any>) {
+    super(message, 'NETWORK_ERROR', 'error', metadata);
+    this.name = 'NetworkError';
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, details?: ErrorDetails) {
-    super(message, 'VALIDATION_ERROR', 400, details);
+  constructor(message: string, metadata?: Record<string, any>) {
+    super(message, 'VALIDATION_ERROR', 'warning', metadata);
     this.name = 'ValidationError';
+  }
+}
+
+export class DatabaseError extends AppError {
+  constructor(message: string, code?: string, details?: ErrorDetails) {
+    super(message, code || 'DATABASE_ERROR', 'error', { details });
+    this.name = 'DatabaseError';
   }
 }
 
 export class AuthenticationError extends AppError {
   constructor(message: string = 'Authentication failed') {
-    super(message, 'AUTH_ERROR', 401);
+    super(message, 'AUTH_ERROR', 'error');
     this.name = 'AuthenticationError';
   }
 }
 
 export class AuthorizationError extends AppError {
   constructor(message: string = 'Not authorized') {
-    super(message, 'FORBIDDEN', 403);
+    super(message, 'FORBIDDEN', 'error');
     this.name = 'AuthorizationError';
   }
 }
@@ -97,4 +116,137 @@ export const handleAuthError = (error: any) => {
 
 export const isAppError = (error: unknown): error is AppError => {
   return error instanceof AppError;
-}; 
+};
+
+// Error boundary props
+export interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+}
+
+// Error boundary state
+export interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: React.ErrorInfo | null;
+}
+
+// Error reporting service
+export const ErrorReporting = {
+  captureError(error: Error, context?: Record<string, any>) {
+    Sentry.withScope((scope) => {
+      if (context) {
+        Object.entries(context).forEach(([key, value]) => {
+          scope.setExtra(key, value);
+        });
+      }
+      Sentry.captureException(error);
+    });
+  },
+
+  captureMessage(message: string, level: Sentry.SeverityLevel = 'error') {
+    Sentry.captureMessage(message, level);
+  },
+
+  setUser(user: { id: string; email?: string; username?: string } | null) {
+    Sentry.setUser(user);
+  },
+
+  setTag(key: string, value: string) {
+    Sentry.setTag(key, value);
+  },
+};
+
+// Error handling hooks
+export const useErrorHandler = () => {
+  const handleError = React.useCallback((error: Error, context?: Record<string, any>) => {
+    if (error instanceof AppError) {
+      ErrorReporting.captureError(error, {
+        ...context,
+        errorCode: error.code,
+        severity: error.severity,
+        ...error.metadata,
+      });
+    } else {
+      ErrorReporting.captureError(error, context);
+    }
+  }, []);
+
+  return { handleError };
+};
+
+// Error boundary component
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return {
+      hasError: true,
+      error,
+    };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    this.setState({
+      error,
+      errorInfo,
+    });
+
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+
+    ErrorReporting.captureError(error, {
+      componentStack: errorInfo.componentStack,
+    });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="max-w-lg w-full p-6 bg-white rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">
+              Something went wrong
+            </h2>
+            <p className="text-gray-600 mb-4">
+              We apologize for the inconvenience. An error has occurred.
+            </p>
+            {process.env.NODE_ENV === 'development' && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <pre className="text-sm text-gray-600 overflow-auto">
+                  {this.state.error?.toString()}
+                </pre>
+                {this.state.errorInfo && (
+                  <pre className="text-sm text-gray-600 mt-2 overflow-auto">
+                    {this.state.errorInfo.componentStack}
+                  </pre>
+                )}
+              </div>
+            )}
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+} 
