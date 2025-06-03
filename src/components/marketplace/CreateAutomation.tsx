@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import { storageService } from '@/services/supabase';
 import { useAuth } from '@/hooks/useAuth';
-import { cn } from '@/lib/utils';
 
 const CATEGORIES = [
   'Marketing',

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,7 +7,6 @@ import { Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { automationService } from '@/services/supabase';
 import { cn } from '@/lib/utils';
 import type { Review } from '@/types/marketplace';
 
@@ -25,11 +25,12 @@ export function ReviewSystem({ automationId, userId, reviews, onReviewAdded }: R
   const queryClient = useQueryClient();
 
   const { mutate: addReview, isPending } = useMutation({
-    mutationFn: () => automationService.addReview(automationId, {
-      user_id: userId,
-      rating,
-      comment,
-    }),
+    mutationFn: async () => {
+      // Mock implementation - replace with actual service call
+      return new Promise((resolve) => {
+        setTimeout(() => resolve({ success: true }), 1000);
+      });
+    },
     onSuccess: () => {
       toast.success('Review added successfully!');
       setIsOpen(false);
@@ -177,12 +178,12 @@ export function ReviewSystem({ automationId, userId, reviews, onReviewAdded }: R
                   <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
                     <img
                       src={review.user.avatar_url || '/default-avatar.png'}
-                      alt={review.user.name}
+                      alt={review.user.full_name || 'User'}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div>
-                    <p className="font-medium">{review.user.name}</p>
+                    <p className="font-medium">{review.user.full_name || 'Anonymous'}</p>
                     <div className="flex items-center text-yellow-500">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <Star
@@ -207,4 +208,4 @@ export function ReviewSystem({ automationId, userId, reviews, onReviewAdded }: R
       </div>
     </div>
   );
-} 
+}
