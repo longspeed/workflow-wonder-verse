@@ -1,223 +1,254 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { css } from '@emotion/react';
-import { responsiveSpacing } from '../../styles/breakpoints';
+import { breakpoints } from '../../styles/breakpoints';
 
 interface SpacingProps {
-  children: React.ReactNode;
+  children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   direction?: 'vertical' | 'horizontal' | 'both';
   className?: string;
 }
 
+const getSpacing = (size: string) => {
+  switch (size) {
+    case 'sm':
+      return {
+        xs: '0.5rem',
+        sm: '0.75rem',
+        md: '1rem',
+        lg: '1.25rem',
+        xl: '1.5rem'
+      };
+    case 'md':
+      return {
+        xs: '1rem',
+        sm: '1.5rem',
+        md: '2rem',
+        lg: '2.5rem',
+        xl: '3rem'
+      };
+    case 'lg':
+      return {
+        xs: '1.5rem',
+        sm: '2rem',
+        md: '3rem',
+        lg: '4rem',
+        xl: '5rem'
+      };
+    case 'xl':
+      return {
+        xs: '2rem',
+        sm: '3rem',
+        md: '4rem',
+        lg: '5rem',
+        xl: '6rem'
+      };
+    default:
+      return {
+        xs: '1rem',
+        sm: '1.5rem',
+        md: '2rem',
+        lg: '2.5rem',
+        xl: '3rem'
+      };
+  }
+};
+
 export const Spacing: React.FC<SpacingProps> = ({
   children,
   size = 'md',
-  direction = 'both',
-  className,
+  direction = 'vertical',
+  className = '',
 }) => {
-  const getSpacing = (size: string) => {
-    switch (size) {
-      case 'sm':
-        return {
-          xs: '16px',
-          sm: '24px',
-          md: '32px',
-          lg: '48px',
-          xl: '64px',
-        };
-      case 'md':
-        return {
-          xs: '24px',
-          sm: '32px',
-          md: '48px',
-          lg: '64px',
-          xl: '96px',
-        };
-      case 'lg':
-        return {
-          xs: '32px',
-          sm: '48px',
-          md: '64px',
-          lg: '96px',
-          xl: '128px',
-        };
-      case 'xl':
-        return {
-          xs: '48px',
-          sm: '64px',
-          md: '96px',
-          lg: '128px',
-          xl: '192px',
-        };
-      default:
-        return {
-          xs: '24px',
-          sm: '32px',
-          md: '48px',
-          lg: '64px',
-          xl: '96px',
-        };
-    }
-  };
-
   const spacing = getSpacing(size);
+  const styles = css`
+    ${direction === 'vertical' && css`
+      margin-top: ${spacing.xs};
+      margin-bottom: ${spacing.xs};
 
-  const spacingStyles = css`
-    /* Base spacing */
-    ${direction === 'vertical' || direction === 'both'
-      ? `
-        margin-top: ${spacing.xs};
-        margin-bottom: ${spacing.xs};
-      `
-      : ''}
-    ${direction === 'horizontal' || direction === 'both'
-      ? `
-        margin-left: ${spacing.xs};
-        margin-right: ${spacing.xs};
-      `
-      : ''}
+      @media (min-width: ${breakpoints.sm}) {
+        margin-top: ${spacing.sm};
+        margin-bottom: ${spacing.sm};
+      }
 
-    /* Responsive spacing */
-    @media (min-width: 640px) {
-      ${direction === 'vertical' || direction === 'both'
-        ? `
-          margin-top: ${spacing.sm};
-          margin-bottom: ${spacing.sm};
-        `
-        : ''}
-      ${direction === 'horizontal' || direction === 'both'
-        ? `
-          margin-left: ${spacing.sm};
-          margin-right: ${spacing.sm};
-        `
-        : ''}
-    }
+      @media (min-width: ${breakpoints.md}) {
+        margin-top: ${spacing.md};
+        margin-bottom: ${spacing.md};
+      }
 
-    @media (min-width: 768px) {
-      ${direction === 'vertical' || direction === 'both'
-        ? `
-          margin-top: ${spacing.md};
-          margin-bottom: ${spacing.md};
-        `
-        : ''}
-      ${direction === 'horizontal' || direction === 'both'
-        ? `
-          margin-left: ${spacing.md};
-          margin-right: ${spacing.md};
-        `
-        : ''}
-    }
+      @media (min-width: ${breakpoints.lg}) {
+        margin-top: ${spacing.lg};
+        margin-bottom: ${spacing.lg};
+      }
 
-    @media (min-width: 1024px) {
-      ${direction === 'vertical' || direction === 'both'
-        ? `
-          margin-top: ${spacing.lg};
-          margin-bottom: ${spacing.lg};
-        `
-        : ''}
-      ${direction === 'horizontal' || direction === 'both'
-        ? `
-          margin-left: ${spacing.lg};
-          margin-right: ${spacing.lg};
-        `
-        : ''}
-    }
+      @media (min-width: ${breakpoints.xl}) {
+        margin-top: ${spacing.xl};
+        margin-bottom: ${spacing.xl};
+      }
+    `}
 
-    @media (min-width: 1280px) {
-      ${direction === 'vertical' || direction === 'both'
-        ? `
-          margin-top: ${spacing.xl};
-          margin-bottom: ${spacing.xl};
-        `
-        : ''}
-      ${direction === 'horizontal' || direction === 'both'
-        ? `
-          margin-left: ${spacing.xl};
-          margin-right: ${spacing.xl};
-        `
-        : ''}
-    }
+    ${direction === 'horizontal' && css`
+      margin-left: ${spacing.xs};
+      margin-right: ${spacing.xs};
+
+      @media (min-width: ${breakpoints.sm}) {
+        margin-left: ${spacing.sm};
+        margin-right: ${spacing.sm};
+      }
+
+      @media (min-width: ${breakpoints.md}) {
+        margin-left: ${spacing.md};
+        margin-right: ${spacing.md};
+      }
+
+      @media (min-width: ${breakpoints.lg}) {
+        margin-left: ${spacing.lg};
+        margin-right: ${spacing.lg};
+      }
+
+      @media (min-width: ${breakpoints.xl}) {
+        margin-left: ${spacing.xl};
+        margin-right: ${spacing.xl};
+      }
+    `}
+
+    ${direction === 'both' && css`
+      margin: ${spacing.xs};
+
+      @media (min-width: ${breakpoints.sm}) {
+        margin: ${spacing.sm};
+      }
+
+      @media (min-width: ${breakpoints.md}) {
+        margin: ${spacing.md};
+      }
+
+      @media (min-width: ${breakpoints.lg}) {
+        margin: ${spacing.lg};
+      }
+
+      @media (min-width: ${breakpoints.xl}) {
+        margin: ${spacing.xl};
+      }
+    `}
   `;
 
   return (
-    <div css={spacingStyles} className={className}>
+    <div className={className} css={styles}>
       {children}
     </div>
   );
 };
 
-// Vertical spacing component
-interface VerticalSpacingProps extends Omit<SpacingProps, 'direction'> {}
-
-export const VerticalSpacing: React.FC<VerticalSpacingProps> = (props) => (
-  <Spacing direction="vertical" {...props} />
+export const VerticalSpacing: React.FC<Omit<SpacingProps, 'direction'>> = (props) => (
+  <Spacing {...props} direction="vertical" />
 );
 
-// Horizontal spacing component
-interface HorizontalSpacingProps extends Omit<SpacingProps, 'direction'> {}
-
-export const HorizontalSpacing: React.FC<HorizontalSpacingProps> = (props) => (
-  <Spacing direction="horizontal" {...props} />
+export const HorizontalSpacing: React.FC<Omit<SpacingProps, 'direction'>> = (props) => (
+  <Spacing {...props} direction="horizontal" />
 );
 
-// Section spacing component
-interface SectionSpacingProps extends Omit<SpacingProps, 'direction' | 'size'> {
+interface SectionSpacingProps {
+  children: ReactNode;
   top?: boolean;
   bottom?: boolean;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
 }
 
 export const SectionSpacing: React.FC<SectionSpacingProps> = ({
+  children,
   top = true,
   bottom = true,
-  ...props
+  size = 'lg',
+  className = '',
 }) => {
-  const sectionStyles = css`
-    ${top ? 'margin-top: 0;' : ''}
-    ${bottom ? 'margin-bottom: 0;' : ''}
+  const spacing = getSpacing(size);
+  const styles = css`
+    ${top && css`
+      margin-top: ${spacing.xs};
+
+      @media (min-width: ${breakpoints.sm}) {
+        margin-top: ${spacing.sm};
+      }
+
+      @media (min-width: ${breakpoints.md}) {
+        margin-top: ${spacing.md};
+      }
+
+      @media (min-width: ${breakpoints.lg}) {
+        margin-top: ${spacing.lg};
+      }
+
+      @media (min-width: ${breakpoints.xl}) {
+        margin-top: ${spacing.xl};
+      }
+    `}
+
+    ${bottom && css`
+      margin-bottom: ${spacing.xs};
+
+      @media (min-width: ${breakpoints.sm}) {
+        margin-bottom: ${spacing.sm};
+      }
+
+      @media (min-width: ${breakpoints.md}) {
+        margin-bottom: ${spacing.md};
+      }
+
+      @media (min-width: ${breakpoints.lg}) {
+        margin-bottom: ${spacing.lg};
+      }
+
+      @media (min-width: ${breakpoints.xl}) {
+        margin-bottom: ${spacing.xl};
+      }
+    `}
   `;
 
   return (
-    <Spacing
-      direction="vertical"
-      size="lg"
-      css={sectionStyles}
-      {...props}
-    />
+    <div className={className} css={styles}>
+      {children}
+    </div>
   );
 };
 
-// Inline spacing component
-interface InlineSpacingProps extends Omit<SpacingProps, 'direction' | 'size'> {
-  size?: 'xs' | 'sm' | 'md' | 'lg';
+interface InlineSpacingProps {
+  children: ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
 }
 
 export const InlineSpacing: React.FC<InlineSpacingProps> = ({
+  children,
   size = 'md',
-  ...props
+  className = '',
 }) => {
-  const getInlineSpacing = (size: string) => {
-    switch (size) {
-      case 'xs':
-        return '4px';
-      case 'sm':
-        return '8px';
-      case 'md':
-        return '16px';
-      case 'lg':
-        return '24px';
-      default:
-        return '16px';
-    }
-  };
-
-  const inlineStyles = css`
+  const spacing = getSpacing(size);
+  const styles = css`
     display: inline-block;
-    margin-right: ${getInlineSpacing(size)};
+    margin: ${spacing.xs};
 
-    &:last-child {
-      margin-right: 0;
+    @media (min-width: ${breakpoints.sm}) {
+      margin: ${spacing.sm};
+    }
+
+    @media (min-width: ${breakpoints.md}) {
+      margin: ${spacing.md};
+    }
+
+    @media (min-width: ${breakpoints.lg}) {
+      margin: ${spacing.lg};
+    }
+
+    @media (min-width: ${breakpoints.xl}) {
+      margin: ${spacing.xl};
     }
   `;
 
-  return <div css={inlineStyles} {...props} />;
+  return (
+    <div className={className} css={styles}>
+      {children}
+    </div>
+  );
 }; 

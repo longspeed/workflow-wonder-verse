@@ -48,7 +48,7 @@ export function FilterSidebar({ filters, onFilterChange }: FilterSidebarProps) {
               </SelectTrigger>
               <SelectContent>
                 {categories.map((category) => (
-                  <SelectItem key={category} value={category === 'All Categories' ? '' : category}>
+                  <SelectItem key={category} value={category === 'All Categories' ? 'all' : category}>
                     {category}
                   </SelectItem>
                 ))}
