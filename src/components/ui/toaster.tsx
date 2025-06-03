@@ -15,17 +15,16 @@ export function Toaster() {
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, ...props }) {
+        // Convert title and description to string for SimpleToast
+        const message = String(description || title || '');
+        
         return (
-          <Toast key={id} message={String(description || title || '')} onClose={() => {}} {...props}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
-            </div>
-            {action}
-            <ToastClose />
-          </Toast>
+          <Toast 
+            key={id} 
+            message={message} 
+            onClose={() => {}} 
+            {...props}
+          />
         )
       })}
       <ToastViewport />

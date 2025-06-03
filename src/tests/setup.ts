@@ -1,10 +1,9 @@
-
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeAll, afterAll, expect } from 'vitest';
 import { setupServer } from 'msw/node';
-import { rest } from 'msw';
+import { http } from 'msw';
 import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
@@ -93,13 +92,10 @@ export function renderWithProviders(
 
 // Mock Service Worker setup
 export const handlers = [
-  rest.get('*/api/*', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        data: 'mocked data',
-      })
-    );
+  http.get('*/api/*', () => {
+    return Response.json({
+      data: 'mocked data',
+    });
   }),
 ];
 
