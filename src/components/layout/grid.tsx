@@ -1,28 +1,53 @@
+
 import React, { ReactNode } from 'react';
-import { css } from '@emotion/react';
-import { breakpoints } from '../../styles/breakpoints';
+import { cn } from '@/lib/utils';
 
 interface GridProps {
   children: ReactNode;
   columns?: number;
-  gap?: string;
+  gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
+
+const getGapClass = (gap?: string) => {
+  switch (gap) {
+    case 'none': return 'gap-0';
+    case 'sm': return 'gap-2';
+    case 'md': return 'gap-4';
+    case 'lg': return 'gap-6';
+    case 'xl': return 'gap-8';
+    default: return 'gap-4';
+  }
+};
+
+const getColumnsClass = (columns?: number) => {
+  switch (columns) {
+    case 1: return 'grid-cols-1';
+    case 2: return 'grid-cols-2';
+    case 3: return 'grid-cols-3';
+    case 4: return 'grid-cols-4';
+    case 5: return 'grid-cols-5';
+    case 6: return 'grid-cols-6';
+    case 12: return 'grid-cols-12';
+    default: return 'grid-cols-1';
+  }
+};
 
 export const Grid: React.FC<GridProps> = ({
   children,
   columns = 1,
-  gap = '1rem',
+  gap = 'md',
   className = '',
 }) => {
-  const styles = css`
-    display: grid;
-    grid-template-columns: repeat(${columns}, 1fr);
-    gap: ${gap};
-  `;
+  const classes = cn(
+    'grid',
+    getColumnsClass(columns),
+    getGapClass(gap),
+    className
+  );
 
   return (
-    <div className={className} css={styles}>
+    <div className={classes}>
       {children}
     </div>
   );
@@ -44,14 +69,14 @@ export const GridItem: React.FC<GridItemProps> = ({
   end,
   className = '',
 }) => {
-  const styles = css`
-    ${span && `grid-column: span ${span};`}
-    ${start && `grid-column-start: ${start};`}
-    ${end && `grid-column-end: ${end};`}
-  `;
+  const spanClass = span ? `col-span-${span}` : '';
+  const startClass = start ? `col-start-${start}` : '';
+  const endClass = end ? `col-end-${end}` : '';
+
+  const classes = cn(spanClass, startClass, endClass, className);
 
   return (
-    <div className={className} css={styles}>
+    <div className={classes}>
       {children}
     </div>
   );
@@ -69,68 +94,13 @@ interface ResponsiveGridProps extends GridProps {
 
 export const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
   children,
-  xs,
-  sm,
-  md,
-  lg,
-  xl,
-  '2xl': twoXl,
+  className = '',
   ...baseProps
 }) => {
-  const styles = css`
-    ${baseProps && css`
-      display: grid;
-      grid-template-columns: repeat(${baseProps.columns || 1}, 1fr);
-      gap: ${baseProps.gap || '1rem'};
-    `}
-
-    ${xs && css`
-      @media (min-width: ${breakpoints.xs}) {
-        grid-template-columns: repeat(${xs.columns || baseProps.columns || 1}, 1fr);
-        gap: ${xs.gap || baseProps.gap || '1rem'};
-      }
-    `}
-
-    ${sm && css`
-      @media (min-width: ${breakpoints.sm}) {
-        grid-template-columns: repeat(${sm.columns || xs?.columns || baseProps.columns || 1}, 1fr);
-        gap: ${sm.gap || xs?.gap || baseProps.gap || '1rem'};
-      }
-    `}
-
-    ${md && css`
-      @media (min-width: ${breakpoints.md}) {
-        grid-template-columns: repeat(${md.columns || sm?.columns || xs?.columns || baseProps.columns || 1}, 1fr);
-        gap: ${md.gap || sm?.gap || xs?.gap || baseProps.gap || '1rem'};
-      }
-    `}
-
-    ${lg && css`
-      @media (min-width: ${breakpoints.lg}) {
-        grid-template-columns: repeat(${lg.columns || md?.columns || sm?.columns || xs?.columns || baseProps.columns || 1}, 1fr);
-        gap: ${lg.gap || md?.gap || sm?.gap || xs?.gap || baseProps.gap || '1rem'};
-      }
-    `}
-
-    ${xl && css`
-      @media (min-width: ${breakpoints.xl}) {
-        grid-template-columns: repeat(${xl.columns || lg?.columns || md?.columns || sm?.columns || xs?.columns || baseProps.columns || 1}, 1fr);
-        gap: ${xl.gap || lg?.gap || md?.gap || sm?.gap || xs?.gap || baseProps.gap || '1rem'};
-      }
-    `}
-
-    ${twoXl && css`
-      @media (min-width: ${breakpoints['2xl']}) {
-        grid-template-columns: repeat(${twoXl.columns || xl?.columns || lg?.columns || md?.columns || sm?.columns || xs?.columns || baseProps.columns || 1}, 1fr);
-        gap: ${twoXl.gap || xl?.gap || lg?.gap || md?.gap || sm?.gap || xs?.gap || baseProps.gap || '1rem'};
-      }
-    `}
-  `;
-
   return (
-    <div className={baseProps.className} css={styles}>
+    <Grid {...baseProps} className={className}>
       {children}
-    </div>
+    </Grid>
   );
 };
 
@@ -144,19 +114,18 @@ export const AutoGrid: React.FC<AutoGridProps> = ({
   children,
   minWidth = '250px',
   maxColumns = 4,
-  gap = '1rem',
+  gap = 'md',
   className = '',
 }) => {
-  const styles = css`
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(${minWidth}, 1fr));
-    grid-template-columns: repeat(auto-fit, minmax(min(${minWidth}, 100%), 1fr));
-    gap: ${gap};
-    max-width: calc(${minWidth} * ${maxColumns} + ${gap} * (${maxColumns} - 1));
-  `;
+  const classes = cn(
+    'grid',
+    'grid-cols-[repeat(auto-fit,minmax(250px,1fr))]',
+    getGapClass(gap),
+    className
+  );
 
   return (
-    <div className={className} css={styles}>
+    <div className={classes} style={{ gridTemplateColumns: `repeat(auto-fit, minmax(${minWidth}, 1fr))` }}>
       {children}
     </div>
   );
@@ -173,44 +142,29 @@ interface MasonryGridProps {
     xl?: number;
     '2xl'?: number;
   };
-  gap?: string;
+  gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
 export const MasonryGrid: React.FC<MasonryGridProps> = ({
   children,
   columns = { xs: 1, sm: 2, md: 3, lg: 4 },
-  gap = '1rem',
+  gap = 'md',
   className = '',
 }) => {
-  const styles = css`
-    display: grid;
-    grid-template-columns: repeat(${columns.xs || 1}, 1fr);
-    gap: ${gap};
-
-    @media (min-width: ${breakpoints.sm}) {
-      grid-template-columns: repeat(${columns.sm || columns.xs || 1}, 1fr);
-    }
-
-    @media (min-width: ${breakpoints.md}) {
-      grid-template-columns: repeat(${columns.md || columns.sm || columns.xs || 1}, 1fr);
-    }
-
-    @media (min-width: ${breakpoints.lg}) {
-      grid-template-columns: repeat(${columns.lg || columns.md || columns.sm || columns.xs || 1}, 1fr);
-    }
-
-    @media (min-width: ${breakpoints.xl}) {
-      grid-template-columns: repeat(${columns.xl || columns.lg || columns.md || columns.sm || columns.xs || 1}, 1fr);
-    }
-
-    @media (min-width: ${breakpoints['2xl']}) {
-      grid-template-columns: repeat(${columns['2xl'] || columns.xl || columns.lg || columns.md || columns.sm || columns.xs || 1}, 1fr);
-    }
-  `;
+  const classes = cn(
+    'grid',
+    getColumnsClass(columns.xs || 1),
+    `sm:${getColumnsClass(columns.sm || columns.xs || 1)}`,
+    `md:${getColumnsClass(columns.md || columns.sm || columns.xs || 1)}`,
+    `lg:${getColumnsClass(columns.lg || columns.md || columns.sm || columns.xs || 1)}`,
+    `xl:${getColumnsClass(columns.xl || columns.lg || columns.md || columns.sm || columns.xs || 1)}`,
+    getGapClass(gap),
+    className
+  );
 
   return (
-    <div className={className} css={styles}>
+    <div className={classes}>
       {children}
     </div>
   );
@@ -226,17 +180,18 @@ export const GridContainer: React.FC<GridContainerProps> = ({
   children,
   maxWidth = '1200px',
   padding = '1rem',
+  className = '',
   ...props
 }) => {
-  const styles = css`
-    max-width: ${maxWidth};
-    padding: ${padding};
-    margin: 0 auto;
-  `;
+  const classes = cn('mx-auto', className);
 
   return (
-    <ResponsiveGrid {...props} className={props.className} css={styles}>
+    <ResponsiveGrid 
+      {...props} 
+      className={classes}
+      style={{ maxWidth, padding }}
+    >
       {children}
     </ResponsiveGrid>
   );
-}; 
+};

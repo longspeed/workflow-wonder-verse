@@ -1,6 +1,6 @@
+
 import React, { ReactNode } from 'react';
-import { css } from '@emotion/react';
-import { breakpoints } from '../../styles/breakpoints';
+import { cn } from '@/lib/utils';
 
 interface SpacingProps {
   children: ReactNode;
@@ -9,49 +9,15 @@ interface SpacingProps {
   className?: string;
 }
 
-const getSpacing = (size: string) => {
-  switch (size) {
-    case 'sm':
-      return {
-        xs: '0.5rem',
-        sm: '0.75rem',
-        md: '1rem',
-        lg: '1.25rem',
-        xl: '1.5rem'
-      };
-    case 'md':
-      return {
-        xs: '1rem',
-        sm: '1.5rem',
-        md: '2rem',
-        lg: '2.5rem',
-        xl: '3rem'
-      };
-    case 'lg':
-      return {
-        xs: '1.5rem',
-        sm: '2rem',
-        md: '3rem',
-        lg: '4rem',
-        xl: '5rem'
-      };
-    case 'xl':
-      return {
-        xs: '2rem',
-        sm: '3rem',
-        md: '4rem',
-        lg: '5rem',
-        xl: '6rem'
-      };
-    default:
-      return {
-        xs: '1rem',
-        sm: '1.5rem',
-        md: '2rem',
-        lg: '2.5rem',
-        xl: '3rem'
-      };
-  }
+const getSpacingClass = (size: string, direction: string) => {
+  const sizeMap = {
+    sm: { vertical: 'my-2', horizontal: 'mx-2', both: 'm-2' },
+    md: { vertical: 'my-4', horizontal: 'mx-4', both: 'm-4' },
+    lg: { vertical: 'my-8', horizontal: 'mx-8', both: 'm-8' },
+    xl: { vertical: 'my-16', horizontal: 'mx-16', both: 'm-16' },
+  };
+
+  return sizeMap[size as keyof typeof sizeMap][direction as keyof typeof sizeMap.sm] || sizeMap.md.vertical;
 };
 
 export const Spacing: React.FC<SpacingProps> = ({
@@ -60,81 +26,11 @@ export const Spacing: React.FC<SpacingProps> = ({
   direction = 'vertical',
   className = '',
 }) => {
-  const spacing = getSpacing(size);
-  const styles = css`
-    ${direction === 'vertical' && css`
-      margin-top: ${spacing.xs};
-      margin-bottom: ${spacing.xs};
-
-      @media (min-width: ${breakpoints.sm}) {
-        margin-top: ${spacing.sm};
-        margin-bottom: ${spacing.sm};
-      }
-
-      @media (min-width: ${breakpoints.md}) {
-        margin-top: ${spacing.md};
-        margin-bottom: ${spacing.md};
-      }
-
-      @media (min-width: ${breakpoints.lg}) {
-        margin-top: ${spacing.lg};
-        margin-bottom: ${spacing.lg};
-      }
-
-      @media (min-width: ${breakpoints.xl}) {
-        margin-top: ${spacing.xl};
-        margin-bottom: ${spacing.xl};
-      }
-    `}
-
-    ${direction === 'horizontal' && css`
-      margin-left: ${spacing.xs};
-      margin-right: ${spacing.xs};
-
-      @media (min-width: ${breakpoints.sm}) {
-        margin-left: ${spacing.sm};
-        margin-right: ${spacing.sm};
-      }
-
-      @media (min-width: ${breakpoints.md}) {
-        margin-left: ${spacing.md};
-        margin-right: ${spacing.md};
-      }
-
-      @media (min-width: ${breakpoints.lg}) {
-        margin-left: ${spacing.lg};
-        margin-right: ${spacing.lg};
-      }
-
-      @media (min-width: ${breakpoints.xl}) {
-        margin-left: ${spacing.xl};
-        margin-right: ${spacing.xl};
-      }
-    `}
-
-    ${direction === 'both' && css`
-      margin: ${spacing.xs};
-
-      @media (min-width: ${breakpoints.sm}) {
-        margin: ${spacing.sm};
-      }
-
-      @media (min-width: ${breakpoints.md}) {
-        margin: ${spacing.md};
-      }
-
-      @media (min-width: ${breakpoints.lg}) {
-        margin: ${spacing.lg};
-      }
-
-      @media (min-width: ${breakpoints.xl}) {
-        margin: ${spacing.xl};
-      }
-    `}
-  `;
+  const spacingClass = getSpacingClass(size, direction);
+  const classes = cn(spacingClass, className);
 
   return (
-    <div className={className} css={styles}>
+    <div className={classes}>
       {children}
     </div>
   );
@@ -163,51 +59,19 @@ export const SectionSpacing: React.FC<SectionSpacingProps> = ({
   size = 'lg',
   className = '',
 }) => {
-  const spacing = getSpacing(size);
-  const styles = css`
-    ${top && css`
-      margin-top: ${spacing.xs};
+  const sizeMap = {
+    sm: { top: 'mt-4', bottom: 'mb-4' },
+    md: { top: 'mt-8', bottom: 'mb-8' },
+    lg: { top: 'mt-16', bottom: 'mb-16' },
+    xl: { top: 'mt-32', bottom: 'mb-32' },
+  };
 
-      @media (min-width: ${breakpoints.sm}) {
-        margin-top: ${spacing.sm};
-      }
-
-      @media (min-width: ${breakpoints.md}) {
-        margin-top: ${spacing.md};
-      }
-
-      @media (min-width: ${breakpoints.lg}) {
-        margin-top: ${spacing.lg};
-      }
-
-      @media (min-width: ${breakpoints.xl}) {
-        margin-top: ${spacing.xl};
-      }
-    `}
-
-    ${bottom && css`
-      margin-bottom: ${spacing.xs};
-
-      @media (min-width: ${breakpoints.sm}) {
-        margin-bottom: ${spacing.sm};
-      }
-
-      @media (min-width: ${breakpoints.md}) {
-        margin-bottom: ${spacing.md};
-      }
-
-      @media (min-width: ${breakpoints.lg}) {
-        margin-bottom: ${spacing.lg};
-      }
-
-      @media (min-width: ${breakpoints.xl}) {
-        margin-bottom: ${spacing.xl};
-      }
-    `}
-  `;
+  const topClass = top ? sizeMap[size].top : '';
+  const bottomClass = bottom ? sizeMap[size].bottom : '';
+  const classes = cn(topClass, bottomClass, className);
 
   return (
-    <div className={className} css={styles}>
+    <div className={classes}>
       {children}
     </div>
   );
@@ -224,31 +88,18 @@ export const InlineSpacing: React.FC<InlineSpacingProps> = ({
   size = 'md',
   className = '',
 }) => {
-  const spacing = getSpacing(size);
-  const styles = css`
-    display: inline-block;
-    margin: ${spacing.xs};
+  const sizeMap = {
+    sm: 'm-2',
+    md: 'm-4',
+    lg: 'm-8',
+    xl: 'm-16',
+  };
 
-    @media (min-width: ${breakpoints.sm}) {
-      margin: ${spacing.sm};
-    }
-
-    @media (min-width: ${breakpoints.md}) {
-      margin: ${spacing.md};
-    }
-
-    @media (min-width: ${breakpoints.lg}) {
-      margin: ${spacing.lg};
-    }
-
-    @media (min-width: ${breakpoints.xl}) {
-      margin: ${spacing.xl};
-    }
-  `;
+  const classes = cn('inline-block', sizeMap[size], className);
 
   return (
-    <div className={className} css={styles}>
+    <div className={classes}>
       {children}
     </div>
   );
-}; 
+};

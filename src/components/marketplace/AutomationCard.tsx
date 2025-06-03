@@ -48,9 +48,7 @@ export function AutomationCard({ automation, onPurchase }: AutomationCardProps) 
             alt={automation.name}
             width={400}
             height={225}
-            quality={80}
             className="object-cover w-full h-full"
-            placeholder="blur"
           />
         </div>
 
