@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,7 +31,7 @@ export function ReviewSystem({ automationId, userId, reviews, onReviewAdded }: R
       });
     },
     onSuccess: () => {
-      toast.success('Review added successfully!');
+      toast('Review added successfully!');
       setIsOpen(false);
       setRating(0);
       setComment('');
@@ -40,7 +39,7 @@ export function ReviewSystem({ automationId, userId, reviews, onReviewAdded }: R
       onReviewAdded?.();
     },
     onError: () => {
-      toast.error('Failed to add review. Please try again.');
+      toast('Failed to add review. Please try again.');
     },
   });
 

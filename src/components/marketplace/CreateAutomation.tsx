@@ -66,7 +66,7 @@ export function CreateAutomation() {
     },
     onSuccess: async (automation) => {
       queryClient.invalidateQueries({ queryKey: ['seller-automations'] });
-      toast.success('Automation created successfully');
+      toast('Automation created successfully');
 
       try {
         console.log('Attempting to send data to webhook:', automation);
@@ -94,7 +94,7 @@ export function CreateAutomation() {
       navigate('/dashboard/automations');
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast(error.message);
     },
   });
 
@@ -116,7 +116,7 @@ export function CreateAutomation() {
         image_urls: [...prev.image_urls, ...urls],
       }));
     } catch (error) {
-      toast.error('Failed to upload images');
+      toast('Failed to upload images');
     } finally {
       setIsUploading(false);
     }
@@ -126,7 +126,7 @@ export function CreateAutomation() {
     e.preventDefault();
     
     if (!formData.name || !formData.description || !formData.price || !formData.category) {
-      toast.error('Please fill in all required fields');
+      toast('Please fill in all required fields');
       return;
     }
 

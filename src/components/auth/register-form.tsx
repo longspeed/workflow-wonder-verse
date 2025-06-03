@@ -29,7 +29,7 @@ export function RegisterForm() {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+      toast('Passwords do not match');
       return;
     }
 
@@ -48,10 +48,10 @@ export function RegisterForm() {
 
       if (error) throw error;
 
-      toast.success('Registration successful! Please check your email to verify your account.');
+      toast('Registration successful! Please check your email to verify your account.');
       navigate('/auth/login');
     } catch (error: any) {
-      toast.error(error.message || 'Registration failed');
+      toast(error.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }

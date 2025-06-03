@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,7 +64,7 @@ const ListingForm = () => {
       });
 
       if (response.ok) {
-        toast.success('Your automation has been submitted for review successfully!');
+        toast('Your automation has been submitted for review successfully!');
         
         // Reset form
         setFormData({
@@ -82,7 +81,7 @@ const ListingForm = () => {
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast.error('Failed to submit your automation. Please try again.');
+      toast('Failed to submit your automation. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -96,7 +95,7 @@ const ListingForm = () => {
       savedAt: new Date().toISOString()
     };
     localStorage.setItem('automationDraft', JSON.stringify(draftData));
-    toast.success('Draft saved successfully!');
+    toast('Draft saved successfully!');
   };
 
   return (
