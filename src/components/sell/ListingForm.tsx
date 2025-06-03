@@ -5,11 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Plus, X } from 'lucide-react';
+import { Upload, Plus, X, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ListingForm = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    productName: '',
+    category: '',
+    description: '',
+    price: '',
+    pricingModel: '',
+    demo: '',
+  });
 
   const addTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
@@ -22,10 +32,71 @@ const ListingForm = () => {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted');
+    setIsSubmitting(true);
+
+    try {
+      // Prepare the data to send to the webhook
+      const submissionData = {
+        ...formData,
+        tags,
+        submittedAt: new Date().toISOString(),
+        commission: (parseFloat(formData.price) * 0.85).toFixed(2)
+      };
+
+      console.log('Submitting form data:', submissionData);
+
+      // Send POST request to the webhook
+      const response = await fetch('https://nguyenngocson.app.n8n.cloud/webhook-test/fdcc6b6c-7172-4312-a3f7-382e379939d9', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
+
+      if (response.ok) {
+        toast.success('Your automation has been submitted for review successfully!');
+        
+        // Reset form
+        setFormData({
+          productName: '',
+          category: '',
+          description: '',
+          price: '',
+          pricingModel: '',
+          demo: '',
+        });
+        setTags([]);
+      } else {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error('Failed to submit your automation. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveDraft = () => {
+    // Save to localStorage as draft
+    const draftData = {
+      ...formData,
+      tags,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem('automationDraft', JSON.stringify(draftData));
+    toast.success('Draft saved successfully!');
   };
 
   return (
@@ -55,6 +126,8 @@ const ListingForm = () => {
                   <Input 
                     id="productName" 
                     placeholder="e.g., Smart Email Responder AI"
+                    value={formData.productName}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
@@ -63,6 +136,8 @@ const ListingForm = () => {
                   <select 
                     id="category" 
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={formData.category}
+                    onChange={handleInputChange}
                     required
                   >
                     <option value="">Select a category</option>
@@ -82,6 +157,8 @@ const ListingForm = () => {
                   id="description"
                   placeholder="Describe what your automation does, its key features, and benefits..."
                   rows={4}
+                  value={formData.description}
+                  onChange={handleInputChange}
                   required
                 />
               </div>
@@ -94,6 +171,8 @@ const ListingForm = () => {
                     type="number"
                     placeholder="99"
                     min="1"
+                    value={formData.price}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
@@ -102,6 +181,8 @@ const ListingForm = () => {
                   <select 
                     id="pricingModel" 
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={formData.pricingModel}
+                    onChange={handleInputChange}
                     required
                   >
                     <option value="">Select model</option>
@@ -115,7 +196,7 @@ const ListingForm = () => {
                   <Label htmlFor="commission">Your Commission (85%)</Label>
                   <Input 
                     id="commission" 
-                    value="$84.15"
+                    value={formData.price ? `$${(parseFloat(formData.price) * 0.85).toFixed(2)}` : '$0.00'}
                     disabled
                     className="bg-green-50 text-green-700"
                   />
@@ -160,6 +241,8 @@ const ListingForm = () => {
                   id="demo" 
                   type="url"
                   placeholder="https://your-demo-link.com"
+                  value={formData.demo}
+                  onChange={handleInputChange}
                 />
               </div>
 
@@ -173,14 +256,22 @@ const ListingForm = () => {
               </div>
 
               <div className="flex justify-end space-x-4 pt-6">
-                <Button variant="outline" type="button">
+                <Button variant="outline" type="button" onClick={handleSaveDraft}>
                   Save as Draft
                 </Button>
                 <Button 
                   type="submit"
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  disabled={isSubmitting}
                 >
-                  Submit for Review
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit for Review'
+                  )}
                 </Button>
               </div>
             </form>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { DollarSign, Zap, Star, Menu, Loader2, ArrowRight } from 'lucide-react';
@@ -30,17 +30,43 @@ const stats = [
   },
 ];
 
-const sidebarLinks = [
-  { label: 'Dashboard', icon: Star, path: '/dashboard' },
-  { label: 'Listings', icon: Zap, path: '/listings' },
-  { label: 'Analytics', icon: DollarSign, path: '/analytics' },
-  { label: 'Settings', icon: Menu, path: '/settings' },
-];
-
 const Dashboard = () => {
   const { user, loading } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    // If user is authenticated, determine their role
+    if (user) {
+      const fetchUserRole = async () => {
+        try {
+          // Simulate API call to get user role
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // For demo purposes, we'll use the role from user metadata if available
+          // otherwise randomly assign a role
+          const userMetadata = user.user_metadata;
+          const role = userMetadata?.role || ['buyer', 'seller', 'teacher', 'learner'][Math.floor(Math.random() * 4)];
+          
+          setUserRole(role);
+        } catch (error) {
+          console.error('Error fetching user role:', error);
+          // Default to buyer if there's an error
+          setUserRole('buyer');
+        } finally {
+          setRoleLoading(false);
+        }
+      };
+
+      fetchUserRole();
+    } else if (!loading) {
+      // If not loading and no user, we're done
+      setRoleLoading(false);
+    }
+  }, [user, loading]);
+
+  // Show loading state while checking authentication or fetching role
+  if (loading || (user && roleLoading)) {
     return (
       <div className="min-h-screen bg-background p-8">
         <div className="max-w-7xl mx-auto space-y-8">
@@ -85,15 +111,21 @@ const Dashboard = () => {
     );
   }
 
+  // Redirect to auth page if user is not authenticated
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
 
+  // Redirect to the appropriate dashboard based on user role
+  if (userRole === 'seller') {
+    return <Navigate to="/seller-dashboard" replace />;
+  } else if (userRole === 'buyer') {
+    return <Navigate to="/buyer-dashboard" replace />;
+  }
+
   // Add more robust checks for user_metadata
   const userMetadata = user.user_metadata;
-  const userRole = userMetadata?.role || 'seller';
-  const userName = userMetadata?.full_name || user.email || 'User'; // Fallback to email if name is missing
-  const userAvatar = userMetadata?.avatar_url || '/avatar.svg';
+  const userName = userMetadata?.full_name || user.email || 'User';
 
   const handleError = (error: Error) => {
     console.error('Dashboard error:', error);
@@ -224,64 +256,30 @@ const Dashboard = () => {
                   >
                     Role: {userRole}
                   </motion.h2>
-                  <AnimatePresence mode="wait">
-                    {userRole === 'seller' && (
-                      <motion.div
-                        key="seller"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        className="space-y-4"
+                  <div className="text-center">
+                    <p className="text-xl mb-8">Welcome, {userName}!</p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                      <Button 
+                        size="lg" 
+                        className="h-32"
+                        onClick={() => {
+                          window.location.href = '/buyer-dashboard';
+                        }}
                       >
-                        <p>Welcome to your seller dashboard! Here you can manage your listings and track your sales.</p>
-                        <Button className="btn-secondary">
-                          Manage Listings
-                        </Button>
-                      </motion.div>
-                    )}
-                    {userRole === 'buyer' && (
-                      <motion.div
-                        key="buyer"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        className="space-y-4"
+                        Switch to Buyer Dashboard
+                      </Button>
+                      <Button 
+                        size="lg" 
+                        className="h-32"
+                        onClick={() => {
+                          window.location.href = '/seller-dashboard';
+                        }}
                       >
-                        <p>Welcome to your buyer dashboard! Browse and purchase products here.</p>
-                        <Button className="btn-secondary">
-                          Browse Products
-                        </Button>
-                      </motion.div>
-                    )}
-                    {userRole === 'teacher' && (
-                      <motion.div
-                        key="teacher"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        className="space-y-4"
-                      >
-                        <p>Welcome to your teacher dashboard! Manage your courses and students here.</p>
-                        <Button className="btn-secondary">
-                          Manage Courses
-                        </Button>
-                      </motion.div>
-                    )}
-                    {userRole === 'learner' && (
-                      <motion.div
-                        key="learner"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        className="space-y-4"
-                      >
-                        <p>Welcome to your learner dashboard! Access your courses and track your progress here.</p>
-                        <Button className="btn-secondary">
-                          View Courses
-                        </Button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                        Switch to Seller Dashboard
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -293,104 +291,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-export default function Dashboard() {
-  const { user, loading } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true);
-
-  useEffect(() => {
-    // If user is authenticated, determine their role
-    if (user) {
-      // In a real app, you would fetch the user's role from your database
-      // For this example, we'll simulate a delay and then set a role
-      const fetchUserRole = async () => {
-        try {
-          // Simulate API call to get user role
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // For demo purposes, we'll use the role from user metadata if available
-          // otherwise randomly assign a role
-          const userMetadata = user.user_metadata;
-          const role = userMetadata?.role || ['buyer', 'seller', 'teacher', 'learner'][Math.floor(Math.random() * 4)];
-          
-          setUserRole(role);
-        } catch (error) {
-          console.error('Error fetching user role:', error);
-          // Default to buyer if there's an error
-          setUserRole('buyer');
-        } finally {
-          setRoleLoading(false);
-        }
-      };
-
-      fetchUserRole();
-    } else if (!loading) {
-      // If not loading and no user, we're done
-      setRoleLoading(false);
-    }
-  }, [user, loading]);
-
-  // Show loading state while checking authentication or fetching role
-  if (loading || (user && roleLoading)) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-lg text-muted-foreground">
-          {loading ? 'Checking authentication...' : 'Loading your dashboard...'}
-        </p>
-      </div>
-    );
-  }
-
-  // Redirect to auth page if user is not authenticated
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // Redirect to the appropriate dashboard based on user role
-  if (userRole === 'seller') {
-    return <Navigate to="/seller-dashboard" replace />;
-  } else if (userRole === 'buyer') {
-    return <Navigate to="/buyer-dashboard" replace />;
-  }
-
-  // If we get here, the user has a role we don't have a specific dashboard for
-  // We could show a generic dashboard or a message
-  return (
-    <ErrorBoundary onError={(error) => console.error('Dashboard error:', error)}>
-      <div className="container mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
-          <h1 className="text-3xl font-bold mb-6">Welcome to Your Dashboard</h1>
-          <p className="text-xl mb-8">Your role: {userRole}</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            <Button 
-              size="lg" 
-              className="h-32"
-              onClick={() => {
-                window.location.href = '/buyer-dashboard';
-              }}
-            >
-              Switch to Buyer Dashboard
-            </Button>
-            <Button 
-              size="lg" 
-              className="h-32"
-              onClick={() => {
-                window.location.href = '/seller-dashboard';
-              }}
-            >
-              Switch to Seller Dashboard
-            </Button>
-          </div>
-        </motion.div>
-      </div>
-    </ErrorBoundary>
-  );
-}
