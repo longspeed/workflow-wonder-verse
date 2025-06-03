@@ -2,176 +2,121 @@
 import React, { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
+type TextVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body' | 'caption' | 'small';
+type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
+type TextAlign = 'left' | 'center' | 'right' | 'justify';
+
 interface ResponsiveTextProps {
   children: ReactNode;
-  variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body' | 'small';
-  as?: keyof JSX.IntrinsicElements;
+  variant: TextVariant;
+  weight?: TextWeight;
+  align?: TextAlign;
   color?: string;
-  align?: 'left' | 'center' | 'right' | 'justify';
-  weight?: 'normal' | 'medium' | 'semibold' | 'bold';
   className?: string;
+  as?: keyof JSX.IntrinsicElements;
 }
 
-const getVariantClasses = (variant: string) => {
+const getTextClasses = (variant: TextVariant, weight?: TextWeight, align?: TextAlign) => {
+  const classes = [];
+  
+  // Base variant styles
   switch (variant) {
     case 'h1':
-      return 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold';
+      classes.push('text-4xl md:text-5xl lg:text-6xl font-bold');
+      break;
     case 'h2':
-      return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold';
+      classes.push('text-3xl md:text-4xl lg:text-5xl font-bold');
+      break;
     case 'h3':
-      return 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold';
+      classes.push('text-2xl md:text-3xl lg:text-4xl font-semibold');
+      break;
     case 'h4':
-      return 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-semibold';
+      classes.push('text-xl md:text-2xl lg:text-3xl font-semibold');
+      break;
     case 'h5':
-      return 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-semibold';
+      classes.push('text-lg md:text-xl lg:text-2xl font-medium');
+      break;
     case 'h6':
-      return 'text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-semibold';
+      classes.push('text-base md:text-lg lg:text-xl font-medium');
+      break;
     case 'body':
-      return 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl';
+      classes.push('text-sm md:text-base lg:text-lg');
+      break;
+    case 'caption':
+      classes.push('text-xs md:text-sm');
+      break;
     case 'small':
-      return 'text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl';
-    default:
-      return 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl';
+      classes.push('text-xs');
+      break;
   }
-};
-
-const getWeightClass = (weight?: string) => {
-  switch (weight) {
-    case 'normal': return 'font-normal';
-    case 'medium': return 'font-medium';
-    case 'semibold': return 'font-semibold';
-    case 'bold': return 'font-bold';
-    default: return 'font-normal';
+  
+  // Weight
+  if (weight) {
+    switch (weight) {
+      case 'normal': classes.push('font-normal'); break;
+      case 'medium': classes.push('font-medium'); break;
+      case 'semibold': classes.push('font-semibold'); break;
+      case 'bold': classes.push('font-bold'); break;
+    }
   }
-};
-
-const getAlignClass = (align?: string) => {
-  switch (align) {
-    case 'left': return 'text-left';
-    case 'center': return 'text-center';
-    case 'right': return 'text-right';
-    case 'justify': return 'text-justify';
-    default: return 'text-left';
+  
+  // Alignment
+  if (align) {
+    switch (align) {
+      case 'left': classes.push('text-left'); break;
+      case 'center': classes.push('text-center'); break;
+      case 'right': classes.push('text-right'); break;
+      case 'justify': classes.push('text-justify'); break;
+    }
   }
+  
+  return classes;
 };
 
 export const ResponsiveText: React.FC<ResponsiveTextProps> = ({
   children,
-  variant = 'body',
-  as,
-  color,
-  align = 'left',
+  variant,
   weight,
-  className = '',
+  align,
+  color,
+  className,
+  as = 'div'
 }) => {
-  const Component = as || (variant.startsWith('h') ? variant : 'p') as keyof JSX.IntrinsicElements;
-
-  const classes = cn(
-    getVariantClasses(variant),
-    getWeightClass(weight),
-    getAlignClass(align),
-    className
-  );
-
-  const style = color ? { color } : undefined;
-
+  const classes = getTextClasses(variant, weight, align);
+  const Component = as;
+  
   return (
-    <Component className={classes} style={style}>
+    <Component 
+      className={cn(
+        'max-w-4xl',
+        ...classes,
+        color && `text-${color}`,
+        className
+      )}
+    >
       {children}
     </Component>
   );
 };
 
-// Heading components
-export const H1: React.FC<Omit<ResponsiveTextProps, 'variant'>> = (props) => (
-  <ResponsiveText variant="h1" {...props} />
-);
-
-export const H2: React.FC<Omit<ResponsiveTextProps, 'variant'>> = (props) => (
-  <ResponsiveText variant="h2" {...props} />
-);
-
-export const H3: React.FC<Omit<ResponsiveTextProps, 'variant'>> = (props) => (
-  <ResponsiveText variant="h3" {...props} />
-);
-
-export const H4: React.FC<Omit<ResponsiveTextProps, 'variant'>> = (props) => (
-  <ResponsiveText variant="h4" {...props} />
-);
-
-export const H5: React.FC<Omit<ResponsiveTextProps, 'variant'>> = (props) => (
-  <ResponsiveText variant="h5" {...props} />
-);
-
-export const H6: React.FC<Omit<ResponsiveTextProps, 'variant'>> = (props) => (
-  <ResponsiveText variant="h6" {...props} />
-);
-
-// Body text components
-export const Body: React.FC<Omit<ResponsiveTextProps, 'variant'>> = (props) => (
-  <ResponsiveText variant="body" {...props} />
-);
-
-export const Small: React.FC<Omit<ResponsiveTextProps, 'variant'>> = (props) => (
-  <ResponsiveText variant="small" {...props} />
-);
-
-// Text block component
-interface TextBlockProps extends Omit<ResponsiveTextProps, 'variant'> {
-  maxWidth?: string;
-}
-
-export const TextBlock: React.FC<TextBlockProps> = ({
-  maxWidth = '65ch',
-  className,
-  ...props
-}) => {
-  return (
-    <Body 
-      {...props} 
-      className={cn('max-w-prose', className)}
-      style={{ maxWidth }}
-    />
-  );
-};
-
-// Text gradient component
-interface TextGradientProps extends Omit<ResponsiveTextProps, 'variant'> {
-  gradient: string;
-}
-
-export const TextGradient: React.FC<TextGradientProps> = ({
-  gradient,
-  className,
+// Convenience components
+export const Heading: React.FC<Omit<ResponsiveTextProps, 'variant'> & { level: 1 | 2 | 3 | 4 | 5 | 6 }> = ({
+  level,
   ...props
 }) => {
   return (
     <ResponsiveText 
-      {...props} 
-      className={cn('bg-gradient-to-r bg-clip-text text-transparent', className)}
-      style={{ backgroundImage: gradient }}
+      variant={`h${level}` as TextVariant}
+      as={`h${level}` as keyof JSX.IntrinsicElements}
+      {...props}
     />
   );
 };
 
-// Text truncate component
-interface TextTruncateProps extends Omit<ResponsiveTextProps, 'variant'> {
-  lines?: number;
-}
+export const Body: React.FC<Omit<ResponsiveTextProps, 'variant'>> = (props) => {
+  return <ResponsiveText variant="body" as="p" {...props} />;
+};
 
-export const TextTruncate: React.FC<TextTruncateProps> = ({
-  lines = 1,
-  className,
-  ...props
-}) => {
-  const truncateClass = lines === 1 
-    ? 'truncate' 
-    : `line-clamp-${lines}`;
-
-  return (
-    <ResponsiveText 
-      {...props} 
-      className={cn(truncateClass, className)}
-    />
-  );
+export const Caption: React.FC<Omit<ResponsiveTextProps, 'variant'>> = (props) => {
+  return <ResponsiveText variant="caption" as="span" {...props} />;
 };

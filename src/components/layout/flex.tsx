@@ -2,94 +2,21 @@
 import React, { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
+type JustifyContent = 'start' | 'end' | 'center' | 'between' | 'around' | 'evenly';
+type AlignItems = 'start' | 'end' | 'center' | 'baseline' | 'stretch';
+type Direction = 'row' | 'column';
+type Wrap = 'nowrap' | 'wrap' | 'wrap-reverse';
+type Gap = 'none' | 'sm' | 'md' | 'lg' | 'xl';
+
 interface FlexProps {
   children: ReactNode;
-  direction?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
-  justify?: 'start' | 'end' | 'center' | 'between' | 'around' | 'evenly';
-  align?: 'start' | 'end' | 'center' | 'stretch' | 'baseline';
-  wrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
-  gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  direction?: Direction;
+  justify?: JustifyContent;
+  align?: AlignItems;
+  wrap?: Wrap;
+  gap?: Gap;
   className?: string;
 }
-
-const getJustifyClass = (justify?: string) => {
-  switch (justify) {
-    case 'start': return 'justify-start';
-    case 'end': return 'justify-end';
-    case 'center': return 'justify-center';
-    case 'between': return 'justify-between';
-    case 'around': return 'justify-around';
-    case 'evenly': return 'justify-evenly';
-    default: return 'justify-start';
-  }
-};
-
-const getAlignClass = (align?: string) => {
-  switch (align) {
-    case 'start': return 'items-start';
-    case 'end': return 'items-end';
-    case 'center': return 'items-center';
-    case 'stretch': return 'items-stretch';
-    case 'baseline': return 'items-baseline';
-    default: return 'items-stretch';
-  }
-};
-
-const getDirectionClass = (direction?: string) => {
-  switch (direction) {
-    case 'row': return 'flex-row';
-    case 'column': return 'flex-col';
-    case 'row-reverse': return 'flex-row-reverse';
-    case 'column-reverse': return 'flex-col-reverse';
-    default: return 'flex-row';
-  }
-};
-
-const getWrapClass = (wrap?: string) => {
-  switch (wrap) {
-    case 'nowrap': return 'flex-nowrap';
-    case 'wrap': return 'flex-wrap';
-    case 'wrap-reverse': return 'flex-wrap-reverse';
-    default: return 'flex-nowrap';
-  }
-};
-
-const getGapClass = (gap?: string) => {
-  switch (gap) {
-    case 'none': return 'gap-0';
-    case 'sm': return 'gap-2';
-    case 'md': return 'gap-4';
-    case 'lg': return 'gap-6';
-    case 'xl': return 'gap-8';
-    default: return 'gap-0';
-  }
-};
-
-export const Flex: React.FC<FlexProps> = ({
-  children,
-  direction = 'row',
-  justify = 'start',
-  align = 'stretch',
-  wrap = 'nowrap',
-  gap = 'none',
-  className = '',
-}) => {
-  const classes = cn(
-    'flex',
-    getDirectionClass(direction),
-    getJustifyClass(justify),
-    getAlignClass(align),
-    getWrapClass(wrap),
-    getGapClass(gap),
-    className
-  );
-
-  return (
-    <div className={classes}>
-      {children}
-    </div>
-  );
-};
 
 interface ResponsiveFlexProps extends FlexProps {
   xs?: Partial<FlexProps>;
@@ -97,81 +24,128 @@ interface ResponsiveFlexProps extends FlexProps {
   md?: Partial<FlexProps>;
   lg?: Partial<FlexProps>;
   xl?: Partial<FlexProps>;
-  '2xl'?: Partial<FlexProps>;
 }
 
-export const ResponsiveFlex: React.FC<ResponsiveFlexProps> = ({
-  children,
-  className = '',
-  ...baseProps
-}) => {
-  return (
-    <Flex {...baseProps} className={className}>
-      {children}
-    </Flex>
-  );
+const getFlexClasses = (props: Partial<FlexProps>) => {
+  const classes = [];
+  
+  if (props.direction === 'column') classes.push('flex-col');
+  else classes.push('flex-row');
+  
+  if (props.justify) {
+    switch (props.justify) {
+      case 'start': classes.push('justify-start'); break;
+      case 'end': classes.push('justify-end'); break;
+      case 'center': classes.push('justify-center'); break;
+      case 'between': classes.push('justify-between'); break;
+      case 'around': classes.push('justify-around'); break;
+      case 'evenly': classes.push('justify-evenly'); break;
+    }
+  }
+  
+  if (props.align) {
+    switch (props.align) {
+      case 'start': classes.push('items-start'); break;
+      case 'end': classes.push('items-end'); break;
+      case 'center': classes.push('items-center'); break;
+      case 'baseline': classes.push('items-baseline'); break;
+      case 'stretch': classes.push('items-stretch'); break;
+    }
+  }
+  
+  if (props.wrap) {
+    switch (props.wrap) {
+      case 'nowrap': classes.push('flex-nowrap'); break;
+      case 'wrap': classes.push('flex-wrap'); break;
+      case 'wrap-reverse': classes.push('flex-wrap-reverse'); break;
+    }
+  }
+  
+  if (props.gap) {
+    switch (props.gap) {
+      case 'none': classes.push('gap-0'); break;
+      case 'sm': classes.push('gap-2'); break;
+      case 'md': classes.push('gap-4'); break;
+      case 'lg': classes.push('gap-6'); break;
+      case 'xl': classes.push('gap-8'); break;
+    }
+  }
+  
+  return classes;
 };
 
-interface FlexItemProps {
-  children: ReactNode;
-  grow?: number;
-  shrink?: number;
-  basis?: string;
-  order?: number;
-  align?: 'auto' | 'start' | 'end' | 'center' | 'stretch' | 'baseline';
-  className?: string;
-}
-
-export const FlexItem: React.FC<FlexItemProps> = ({
-  children,
-  grow = 0,
-  shrink = 1,
-  basis = 'auto',
-  order = 0,
-  align = 'auto',
-  className = '',
+export const Flex: React.FC<FlexProps> = ({ 
+  children, 
+  className,
+  ...props 
 }) => {
-  const growClass = grow > 0 ? `flex-grow-${grow}` : '';
-  const shrinkClass = shrink > 0 ? `flex-shrink-${shrink}` : 'flex-shrink-0';
-  const orderClass = order > 0 ? `order-${order}` : '';
-  const alignClass = align !== 'auto' ? `self-${align}` : '';
-
-  const classes = cn(
-    growClass,
-    shrinkClass,
-    orderClass,
-    alignClass,
-    className
-  );
-
+  const classes = getFlexClasses(props);
+  
   return (
-    <div className={classes} style={{ flexBasis: basis }}>
+    <div className={cn('flex', ...classes, className)}>
       {children}
     </div>
   );
 };
 
-interface FlexContainerProps extends ResponsiveFlexProps {
-  maxWidth?: string;
-  padding?: string;
-}
-
-export const FlexContainer: React.FC<FlexContainerProps> = ({
-  children,
-  maxWidth = '1200px',
-  padding = '1rem',
-  className = '',
-  ...props
+export const ResponsiveFlex: React.FC<ResponsiveFlexProps> = ({ 
+  children, 
+  className,
+  xs,
+  sm,
+  md,
+  lg,
+  xl,
+  ...baseProps 
 }) => {
-  const classes = cn('mx-auto', className);
-
+  const baseClasses = getFlexClasses(baseProps);
+  const xsClasses = xs ? getFlexClasses(xs).map(c => `xs:${c}`) : [];
+  const smClasses = sm ? getFlexClasses(sm).map(c => `sm:${c}`) : [];
+  const mdClasses = md ? getFlexClasses(md).map(c => `md:${c}`) : [];
+  const lgClasses = lg ? getFlexClasses(lg).map(c => `lg:${c}`) : [];
+  const xlClasses = xl ? getFlexClasses(xl).map(c => `xl:${c}`) : [];
+  
   return (
-    <ResponsiveFlex 
-      {...props} 
-      className={classes}
-      style={{ maxWidth, padding }}
-    >
+    <div className={cn(
+      'flex',
+      'max-w-7xl mx-auto px-4',
+      ...baseClasses,
+      ...xsClasses,
+      ...smClasses,
+      ...mdClasses,
+      ...lgClasses,
+      ...xlClasses,
+      className
+    )}>
       {children}
-    </ResponsiveFlex>
+    </div>
+  );
+};
+
+export const FlexItem: React.FC<{
+  children: ReactNode;
+  flex?: 'none' | 'auto' | '1' | 'initial';
+  order?: number;
+  className?: string;
+}> = ({ children, flex, order, className }) => {
+  const classes = [];
+  
+  if (flex) {
+    switch (flex) {
+      case 'none': classes.push('flex-none'); break;
+      case 'auto': classes.push('flex-auto'); break;
+      case '1': classes.push('flex-1'); break;
+      case 'initial': classes.push('flex-initial'); break;
+    }
+  }
+  
+  if (order !== undefined) {
+    classes.push(`order-${order}`);
+  }
+  
+  return (
+    <div className={cn(...classes, className)}>
+      {children}
+    </div>
   );
 };
