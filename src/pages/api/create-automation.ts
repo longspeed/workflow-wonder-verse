@@ -59,7 +59,13 @@ export default async function handler(
     }
 
     const automationData: ProductInsert = {
-      ...validatedData,
+      seller_id: validatedData.seller_id,
+      title: validatedData.title,
+      description: validatedData.description,
+      price: validatedData.price,
+      category: validatedData.category,
+      image_urls: validatedData.image_urls,
+      status: validatedData.status,
       created_at: new Date().toISOString(),
     };
 

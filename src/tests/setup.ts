@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
-import { afterEach, beforeAll, afterAll } from 'vitest';
+import { afterEach, beforeAll, afterAll, expect } from 'vitest';
 import { setupServer } from 'msw/node';
 import { rest } from 'msw';
 import { render } from '@testing-library/react';

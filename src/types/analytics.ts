@@ -1,3 +1,4 @@
+
 export interface DateRange {
   from: Date;
   to: Date;
@@ -12,37 +13,14 @@ export interface AnalyticsData {
   totalReviews: number;
   activeAutomations: number;
   totalAutomations: number;
-  revenueData: RevenueDataPoint[];
-  salesData: SalesDataPoint[];
-  ratingData: RatingDataPoint[];
-  automationData: AutomationDataPoint[];
-  insights: Insight[];
+  revenueData: Array<{ date: string; revenue: number }>;
+  salesData: Array<{ automation: string; sales: number }>;
+  ratingData: Array<{ rating: number; value: number }>;
+  automationData: Array<{ name: string; revenue: number; sales: number }>;
+  insights: Array<{
+    title: string;
+    description: string;
+    type: 'positive' | 'negative' | 'neutral';
+    impact: 'high' | 'medium' | 'low';
+  }>;
 }
-
-export interface RevenueDataPoint {
-  date: string;
-  revenue: number;
-}
-
-export interface SalesDataPoint {
-  automation: string;
-  sales: number;
-}
-
-export interface RatingDataPoint {
-  rating: number;
-  value: number;
-}
-
-export interface AutomationDataPoint {
-  name: string;
-  revenue: number;
-  sales: number;
-}
-
-export interface Insight {
-  title: string;
-  description: string;
-  type: 'positive' | 'negative' | 'neutral';
-  impact: 'high' | 'medium' | 'low';
-} 

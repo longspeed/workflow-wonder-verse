@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
@@ -129,7 +130,7 @@ const Dashboard = () => {
 
   const handleError = (error: Error) => {
     console.error('Dashboard error:', error);
-    toast.error('An error occurred in the dashboard');
+    toast('An error occurred in the dashboard');
   };
 
   return (
