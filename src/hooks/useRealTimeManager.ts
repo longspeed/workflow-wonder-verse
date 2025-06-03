@@ -1,6 +1,6 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { RealTimeUpdateToast } from '@/components/ui/real-time-update-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -9,6 +9,8 @@ export type ConnectionStatus = 'connected' | 'disconnected' | 'error' | 'connect
 export interface UseRealTimeManagerOptions {
   channel: string;
   onUpdate?: (payload: any) => void;
+  onInsert?: (payload: any) => void;
+  filter?: string;
   showToasts?: boolean;
   autoReconnect?: boolean;
   reconnectInterval?: number;
@@ -19,6 +21,8 @@ export interface UseRealTimeManagerOptions {
 export function useRealTimeManager({
   channel,
   onUpdate,
+  onInsert,
+  filter,
   showToasts = true,
   autoReconnect = true,
   reconnectInterval = 5000,
@@ -42,15 +46,17 @@ export function useRealTimeManager({
     
     // Process updates in batch
     updates.forEach(update => {
-      if (onUpdate) {
+      if (update.eventType === 'UPDATE' && onUpdate) {
         onUpdate(update);
+      } else if (update.eventType === 'INSERT' && onInsert) {
+        onInsert(update);
       }
     });
 
     if (showToasts) {
-      RealTimeUpdateToast.updateReceived();
+      toast(`Received ${updates.length} real-time updates`);
     }
-  }, [onUpdate, showToasts]);
+  }, [onUpdate, onInsert, showToasts]);
 
   const handleUpdate = useCallback((payload: any) => {
     const now = Date.now();
@@ -78,35 +84,37 @@ export function useRealTimeManager({
 
     setStatus('connecting');
 
+    const channelConfig: any = {
+      event: '*',
+      schema: 'public'
+    };
+
+    if (filter) {
+      channelConfig.filter = filter;
+    }
+
     const newSubscription = supabase
       .channel(channel)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public'
-        },
-        handleUpdate
-      )
+      .on('postgres_changes', channelConfig, handleUpdate)
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           setStatus('connected');
           setReconnectAttempts(0);
           if (showToasts) {
-            RealTimeUpdateToast.connectionRestored();
+            toast('Connected to real-time updates');
           }
         } else if (status === 'CLOSED') {
           setStatus('disconnected');
         } else if (status === 'CHANNEL_ERROR') {
           setStatus('error');
           if (showToasts) {
-            RealTimeUpdateToast.connectionLost();
+            toast('Real-time connection error');
           }
         }
       });
 
     setSubscription(newSubscription);
-  }, [channel, handleUpdate, showToasts]);
+  }, [channel, handleUpdate, showToasts, filter]);
 
   const disconnect = useCallback(() => {
     if (subscription) {
@@ -127,7 +135,7 @@ export function useRealTimeManager({
         connect();
       } else {
         if (showToasts) {
-          RealTimeUpdateToast.connectionLost();
+          toast('Failed to reconnect after multiple attempts');
         }
       }
     }, backoffTime);
@@ -164,41 +172,13 @@ export function useRealTimeManager({
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [connect]);
 
-  // Handle Supabase connection status
+  // Initial connection
   useEffect(() => {
-    const channel = supabase.channel('system');
-
-    const handleStatusChange = (status: ConnectionStatus) => {
-      setStatus(status);
-      
-      switch (status) {
-        case 'connected':
-          toast.success('Connected to real-time updates');
-          setReconnectAttempts(0);
-          break;
-        case 'disconnected':
-          toast.error('Disconnected from real-time updates');
-          break;
-        case 'reconnecting':
-          toast.warning('Reconnecting to real-time updates...');
-          break;
-      }
-    };
-
-    channel
-      .on('system', { event: 'connected' }, () => handleStatusChange('connected'))
-      .on('system', { event: 'disconnected' }, () => handleStatusChange('disconnected'))
-      .on('system', { event: 'reconnecting' }, () => handleStatusChange('reconnecting'))
-      .subscribe();
-
-    return () => {
-      channel.unsubscribe();
-    };
+    connect();
   }, []);
 
-  // Reconnect with exponential backoff
   const reconnect = useCallback(async () => {
     if (!isOnline) return;
 
@@ -206,7 +186,7 @@ export function useRealTimeManager({
     const backoffDelay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
 
     if (reconnectAttempts >= maxRetries) {
-      toast.error('Failed to reconnect after multiple attempts');
+      toast('Failed to reconnect after multiple attempts');
       return;
     }
 
@@ -215,12 +195,12 @@ export function useRealTimeManager({
 
     try {
       await new Promise(resolve => setTimeout(resolve, backoffDelay));
-      await supabase.reconnect();
+      connect();
     } catch (error) {
       console.error('Reconnection failed:', error);
       reconnect();
     }
-  }, [isOnline, reconnectAttempts]);
+  }, [isOnline, reconnectAttempts, connect]);
 
   return {
     status,

@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { useRealTimeManager } from '@/hooks/useRealTimeManager';
 
@@ -77,3 +77,18 @@ export const triggerInfoToast = (message: string, title?: string) => {
 export const triggerWarningToast = (message: string, title?: string) => {
   toast(message);
 };
+
+// Create a static class for real-time update toast notifications
+export class RealTimeUpdateToast {
+  static updateReceived() {
+    toast('Real-time update received');
+  }
+
+  static connectionRestored() {
+    toast('Connection restored');
+  }
+
+  static connectionLost() {
+    toast('Connection lost');
+  }
+}

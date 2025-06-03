@@ -1,15 +1,13 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Send, Paperclip, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { automationService } from '@/services/supabase';
 import { useRealTimeManager } from '@/hooks/useRealTimeManager';
 import { cn } from '@/lib/utils';
 
@@ -41,7 +39,7 @@ export function SupportChat({ automationId, userId, onClose }: SupportChatProps)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  // Mock support ticket for now since getSupportTicket doesn't exist
+  // Mock support ticket for now
   const ticket: SupportTicket = {
     id: `ticket-${automationId}-${userId}`,
     status: 'open',
@@ -51,7 +49,6 @@ export function SupportChat({ automationId, userId, onClose }: SupportChatProps)
   // Real-time updates for messages
   useRealTimeManager({
     channel: 'support-messages',
-    filter: `ticket_id=eq.${ticket?.id}`,
     onUpdate: (payload) => {
       queryClient.setQueryData(
         ['support-messages', ticket?.id],
