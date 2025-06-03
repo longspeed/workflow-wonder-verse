@@ -1,150 +1,96 @@
 /// <reference lib="webworker" />
 
-const CACHE_NAME = 'workflow-wonder-verse-v1';
-const STATIC_ASSETS = [
+declare const self: ServiceWorkerGlobalScope & {
+  __WB_MANIFEST: (string | PrecacheEntry)[];
+};
+
+interface PrecacheEntry {
+  url: string;
+  revision?: string;
+}
+
+const CACHE_NAME = 'workflow-wonder-v1';
+const urlsToCache = [
   '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.ico',
-  '/assets/logo.png',
+  '/static/js/bundle.js',
+  '/static/css/main.css',
+  '/manifest.json'
 ];
 
-// Install event - cache static assets
-self.addEventListener('install', (event: ExtendableMessageEvent) => {
+self.addEventListener('install', (event: ExtendableEvent) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(urlsToCache))
   );
 });
 
-// Activate event - clean up old caches
-self.addEventListener('activate', (event: ExtendableMessageEvent) => {
+self.addEventListener('fetch', (event: FetchEvent) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      }
+    )
+  );
+});
+
+self.addEventListener('activate', (event: ExtendableEvent) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
       );
     })
   );
 });
 
-// Fetch event - serve from cache or network
-self.addEventListener('fetch', (event: FetchEvent) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
+// Background sync
+self.addEventListener('sync', (event: ExtendableEvent & { tag: string }) => {
+  if (event.tag === 'background-sync') {
+    event.waitUntil(doBackgroundSync());
   }
+});
 
-  // Skip non-HTTP(S) requests
-  if (!event.request.url.startsWith('http')) {
-    return;
-  }
+// Push notification handler
+self.addEventListener('push', (event: ExtendableEvent & { data?: PushMessageData }) => {
+  const options = {
+    body: event.data?.text() || 'New notification',
+    icon: '/icon-192x192.png',
+    badge: '/badge-72x72.png'
+  };
 
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Return cached response if found
-      if (response) {
-        return response;
-      }
-
-      // Clone the request
-      const fetchRequest = event.request.clone();
-
-      return fetch(fetchRequest).then((response) => {
-        // Check if we received a valid response
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-
-        // Clone the response
-        const responseToCache = response.clone();
-
-        // Cache the response
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
-        return response;
-      });
-    })
+  event.waitUntil(
+    self.registration.showNotification('Workflow Wonder', options)
   );
 });
 
-// Background sync for offline actions
-self.addEventListener('sync', (event: SyncEvent) => {
-  if (event.tag === 'sync-automations') {
-    event.waitUntil(syncAutomations());
+async function doBackgroundSync() {
+  try {
+    // Sync offline data when connection is restored
+    console.log('Background sync triggered');
+    
+    // Add your sync logic here
+    // For example, sync form submissions, upload queued files, etc.
+    
+  } catch (error) {
+    console.error('Background sync failed:', error);
   }
-});
+}
 
-// Push notification handling
-self.addEventListener('push', (event: PushEvent) => {
-  const data = event.data?.json() ?? {};
+// Notification click handler
+self.addEventListener('notificationclick', (event: ExtendableEvent & { notification: Notification }) => {
+  event.notification.close();
   
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: '/assets/logo.png',
-      badge: '/assets/badge.png',
-      data: data.data,
-    })
+    self.clients.openWindow('/')
   );
 });
 
-// Notification click handling
-self.addEventListener('notificationclick', (event: NotificationEvent) => {
-  event.notification.close();
-
-  if (event.notification.data?.url) {
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url)
-    );
-  }
-});
-
-// Helper function to sync automations
-async function syncAutomations() {
-  try {
-    const db = await openDB();
-    const pendingAutomations = await db.getAll('pendingAutomations');
-
-    for (const automation of pendingAutomations) {
-      try {
-        // Attempt to sync the automation
-        await syncAutomation(automation);
-        
-        // Remove from pending if successful
-        await db.delete('pendingAutomations', automation.id);
-      } catch (error) {
-        console.error('Failed to sync automation:', error);
-      }
-    }
-  } catch (error) {
-    console.error('Failed to sync automations:', error);
-  }
-}
-
-// Helper function to open IndexedDB
-function openDB() {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open('workflow-wonder-verse', 1);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      db.createObjectStore('pendingAutomations', { keyPath: 'id' });
-    };
-  });
-}
-
-// Helper function to sync a single automation
-async function syncAutomation(automation: any) {
-  // Implement your sync logic here
-  // This is just a placeholder
-  return new Promise((resolve) => setTimeout(resolve, 1000));
-} 
+export {};

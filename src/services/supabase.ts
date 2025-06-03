@@ -1,13 +1,13 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 
-type Automation = Database['public']['Tables']['automations']['Row'];
+type Product = Database['public']['Tables']['products']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
 export const automationService = {
   async getAutomations() {
     const { data, error } = await supabase
-      .from('automations')
+      .from('products')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -17,7 +17,7 @@ export const automationService = {
 
   async getAutomationById(id: string) {
     const { data, error } = await supabase
-      .from('automations')
+      .from('products')
       .select('*')
       .eq('id', id)
       .single();
@@ -28,7 +28,7 @@ export const automationService = {
 
   async getAutomationsBySeller(sellerId: string) {
     const { data, error } = await supabase
-      .from('automations')
+      .from('products')
       .select('*')
       .eq('seller_id', sellerId)
       .order('created_at', { ascending: false });
@@ -37,9 +37,9 @@ export const automationService = {
     return { data, error: null };
   },
 
-  async createAutomation(automation: Omit<Automation, 'id' | 'created_at' | 'updated_at'>) {
+  async createAutomation(automation: Omit<Product, 'id' | 'created_at' | 'updated_at'>) {
     const { data, error } = await supabase
-      .from('automations')
+      .from('products')
       .insert(automation)
       .select()
       .single();
@@ -48,9 +48,9 @@ export const automationService = {
     return { data, error: null };
   },
 
-  async updateAutomation(id: string, updates: Partial<Automation>) {
+  async updateAutomation(id: string, updates: Partial<Product>) {
     const { data, error } = await supabase
-      .from('automations')
+      .from('products')
       .update(updates)
       .eq('id', id)
       .select()
@@ -62,7 +62,7 @@ export const automationService = {
 
   async deleteAutomation(id: string) {
     const { error } = await supabase
-      .from('automations')
+      .from('products')
       .delete()
       .eq('id', id);
 
@@ -72,7 +72,7 @@ export const automationService = {
 
   async getFeaturedAutomations() {
     const { data, error } = await supabase
-      .from('automations')
+      .from('products')
       .select('*, profiles(*)')
       .eq('featured', true)
       .order('created_at', { ascending: false });
@@ -83,9 +83,9 @@ export const automationService = {
 
   async searchAutomations(query: string) {
     const { data, error } = await supabase
-      .from('automations')
+      .from('products')
       .select('*, profiles(*)')
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+      .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -94,7 +94,7 @@ export const automationService = {
 
   async getAutomationsByCategory(category: string) {
     const { data, error } = await supabase
-      .from('automations')
+      .from('products')
       .select('*, profiles(*)')
       .eq('category', category)
       .order('created_at', { ascending: false });
@@ -105,8 +105,8 @@ export const automationService = {
 
   subscribeToAutomations(callback: (payload: any) => void) {
     return supabase
-      .channel('automations-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'automations' }, callback)
+      .channel('products-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, callback)
       .subscribe();
   }
 };
