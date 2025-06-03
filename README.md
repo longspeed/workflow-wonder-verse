@@ -1,70 +1,94 @@
 # Workflow Wonder Verse
 
-A modern marketplace for workflow automations, built with React, TypeScript, and Supabase.
+A modern, responsive design system and component library built with React, TypeScript, and Emotion.
 
 ## Features
 
-- 🎨 Modern, responsive UI with smooth animations
-- 🔐 Secure authentication and authorization
-- 📱 Mobile-first design
-- 🚀 Offline capabilities with service workers
-- 🎯 Role-based access control
-- 📊 Interactive dashboard
-- 🔄 Real-time updates
-- 🎭 Dark/Light theme support
+- 🎨 Comprehensive design system with typography, colors, and spacing
+- 📱 Fully responsive components
+- 🌙 Dark mode support
+- ⚡ Performance optimized
+- ♿ Accessibility compliant
+- 🎭 Smooth animations with Framer Motion
+- 📦 Modular and reusable components
 
-## Tech Stack
+## Components
 
-- **Frontend**: React, TypeScript, Tailwind CSS
-- **State Management**: React Query
-- **Authentication**: Supabase Auth
-- **Database**: Supabase
-- **UI Components**: Radix UI, Framer Motion
-- **Styling**: Tailwind CSS
-- **Testing**: Vitest, Testing Library
+### Layout
+- `Container`: Responsive container with max-width and padding
+- `Grid`: Flexible grid system with responsive breakpoints
+- `Flex`: Responsive flexbox layouts
+- `Spacing`: Consistent spacing utilities
+
+### Typography
+- `ResponsiveText`: Responsive text components with semantic variants
+- `TextBlock`: Text blocks with optimal line length
+- `TextGradient`: Gradient text effects
+- `TextTruncate`: Text truncation with line clamping
+
+### Animations
+- `AnimatedElement`: Base animation component
+- `StaggeredAnimation`: Staggered animations for lists
+- `ResponsiveAnimation`: Breakpoint-based animations
+- `PageTransition`: Smooth page transitions
+- `AnimatedHover`: Interactive hover effects
+- `AnimatedScroll`: Scroll-triggered animations
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js (v16 or higher)
-- npm or yarn
-- Supabase account
-
 ### Installation
 
+```bash
+npm install workflow-wonder-verse
+# or
+yarn add workflow-wonder-verse
+```
+
+### Usage
+
+```tsx
+import { Container, ResponsiveText, AnimatedElement } from 'workflow-wonder-verse';
+
+function App() {
+  return (
+    <Container>
+      <AnimatedElement type="fade">
+        <ResponsiveText variant="h1">
+          Hello, World!
+        </ResponsiveText>
+      </AnimatedElement>
+    </Container>
+  );
+}
+```
+
+## Development
+
+### Prerequisites
+
+- Node.js 14.x or later
+- npm or yarn
+
+### Setup
+
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/workflow-wonder-verse.git
-   cd workflow-wonder-verse
-   ```
+```bash
+git clone https://github.com/yourusername/workflow-wonder-verse.git
+cd workflow-wonder-verse
+```
 
 2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Create a `.env` file in the root directory and add your Supabase credentials:
-   ```env
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-## Project Structure
-
+```bash
+npm install
+# or
+yarn install
 ```
-src/
-├── components/     # Reusable UI components
-├── hooks/         # Custom React hooks
-├── lib/           # Utility functions and configurations
-├── pages/         # Page components
-├── styles/        # Global styles and Tailwind config
-└── types/         # TypeScript type definitions
+
+3. Start the development server:
+```bash
+npm run dev
+# or
+yarn dev
 ```
 
 ## Contributing
@@ -83,7 +107,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [React](https://reactjs.org/)
 - [TypeScript](https://www.typescriptlang.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Supabase](https://supabase.io/)
+- [Emotion](https://emotion.sh/)
 - [Framer Motion](https://www.framer.com/motion/)
-- [Radix UI](https://www.radix-ui.com/)
