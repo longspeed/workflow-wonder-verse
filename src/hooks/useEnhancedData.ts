@@ -9,7 +9,6 @@ export interface UseEnhancedDataOptions<T> {
   options?: Omit<UseQueryOptions<T>, 'queryKey' | 'queryFn'>;
   realTimeChannel?: string;
   onRealtimeUpdate?: (data: T) => void;
-  showToasts?: boolean;
 }
 
 export function useEnhancedData<T>({
@@ -18,7 +17,6 @@ export function useEnhancedData<T>({
   options = {},
   realTimeChannel,
   onRealtimeUpdate,
-  showToasts = true
 }: UseEnhancedDataOptions<T>) {
   const query = useQuery({
     queryKey,
@@ -33,7 +31,6 @@ export function useEnhancedData<T>({
         onRealtimeUpdate(payload.new as T);
       }
     },
-    showToasts,
     autoReconnect: true
   });
 

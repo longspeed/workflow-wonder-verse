@@ -9,6 +9,8 @@ export interface UseRealTimeManagerOptions {
   onUpdate?: (payload: any) => void;
   onInsert?: (payload: any) => void;
   onDelete?: (payload: any) => void;
+  showToasts?: boolean;
+  autoReconnect?: boolean;
 }
 
 export const useRealTimeManager = (options: UseRealTimeManagerOptions) => {
@@ -54,5 +56,8 @@ export const useRealTimeManager = (options: UseRealTimeManagerOptions) => {
     };
   }, [options.channel, options.table, options.filter]);
 
-  return subscriptionRef.current;
+  return {
+    status: 'connected',
+    subscription: subscriptionRef.current
+  };
 };

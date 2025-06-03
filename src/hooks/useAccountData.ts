@@ -28,9 +28,12 @@ export const useAccountData = () => {
       const profileData = await profileService.getProfile(user.id);
       setProfile(profileData?.data || null);
 
-      // Fetch user's products (automations)
+      // Fetch user's products (automations) - filter only products, not profiles
       const { data: productsData } = await automationService.getAutomations();
-      setAutomations(productsData || []);
+      const filteredProducts = productsData?.filter(item => 
+        'category' in item && 'title' in item
+      ) as Product[] || [];
+      setAutomations(filteredProducts);
     } catch (err) {
       console.error('Error fetching account data:', err);
       setError(err instanceof Error ? err : new Error('Unknown error occurred'));
