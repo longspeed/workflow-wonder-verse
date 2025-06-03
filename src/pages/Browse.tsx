@@ -1,213 +1,250 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Filter, Grid, List, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, Download, User, Search, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { LoadingState } from '@/components/ui/loading-state';
-import { AutomationCard } from '@/components/marketplace/AutomationCard';
-import { SearchBar } from '@/components/marketplace/SearchBar';
-import { CategoryFilter } from '@/components/marketplace/CategoryFilter';
-import { SortFilter } from '@/components/marketplace/SortFilter';
-import { PriceRangeFilter } from '@/components/marketplace/PriceRangeFilter';
-import { RatingFilter } from '@/components/marketplace/RatingFilter';
-import { TagsFilter } from '@/components/marketplace/TagsFilter';
-import { SavedFilters } from '@/components/marketplace/SavedFilters';
-import { useInView } from 'react-intersection-observer';
+import { Separator } from '@/components/ui/separator';
+import SearchBar from '@/components/marketplace/SearchBar';
+import { OptimizedImage } from '@/components/ui/optimized-image';
+import { automationService } from '@/services/supabase';
 import { useMarketplace } from '@/hooks/useMarketplace';
-import { useNavigate } from 'react-router-dom';
+import type { AutomationFilters } from '@/types/automation';
+import type { Database } from '@/integrations/supabase/types';
 
-const Browse = () => {
-  const { toast } = useToast();
-  const navigate = useNavigate();
+type Product = Database['public']['Tables']['products']['Row'];
+
+interface ExtendedProduct extends Product {
+  name?: string;
+  profiles?: {
+    full_name: string;
+    avatar_url: string;
+  };
+}
+
+export default function Browse() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('featured');
-  const [priceRange, setPriceRange] = useState<string>('0-1000');
-  const [minRating, setMinRating] = useState<string>('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [sortBy, setSortBy] = useState('popularity');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
-  const parentRef = useRef<HTMLDivElement>(null);
 
-  const {
-    automations,
-    isLoadingAutomations,
-    isFetchingNextPage,
-    hasNextPage,
-    loadMoreRef,
-    filters,
-    setFilters,
-  } = useMarketplace();
+  const filters: AutomationFilters = {
+    search: searchTerm,
+    category: selectedCategory,
+    sortBy,
+    sortOrder: 'desc',
+    price: '',
+    rating: '',
+    tags: []
+  };
 
-  // Update filters when any filter value changes
-  useEffect(() => {
-    setFilters({
-      ...filters,
-      search: searchTerm,
-      category: selectedCategory,
-      sortBy: sortBy,
-      price: priceRange,
-      rating: minRating,
-      tags: selectedTags,
-    });
-  }, [searchTerm, selectedCategory, sortBy, priceRange, minRating, selectedTags, setFilters]);
-
-  // Setup virtualizer
-  const rowVirtualizer = useVirtualizer({
-    count: automations.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => 200, []),
-    overscan: 5,
+  // Fetch automations with filters
+  const { data: automations, isLoading, error, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ['automations', filters],
+    queryFn: async ({ pageParam = 0 }) => {
+      const { data } = await automationService.getAutomations();
+      const items = data || [];
+      const filteredItems = items.filter((item: Product) => {
+        if (searchTerm && !item.title.toLowerCase().includes(searchTerm.toLowerCase())) {
+          return false;
+        }
+        if (selectedCategory && item.category !== selectedCategory) {
+          return false;
+        }
+        return true;
+      });
+      
+      return {
+        items: filteredItems,
+        nextPage: pageParam + 1,
+        hasMore: false
+      };
+    },
+    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextPage : undefined,
+    initialPageParam: 0
   });
 
-  const handlePurchase = async (automation: any) => {
-    try {
-      // Add purchase logic here
-      toast({
-        title: 'Purchase Successful',
-        description: `You have successfully purchased ${automation.name}!`
-      });
-    } catch (error) {
-      toast({
-        title: 'Purchase Failed',
-        description: 'There was an error processing your purchase.',
-        variant: 'destructive'
-      });
+  // Fetch categories
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data } = await automationService.getAutomations();
+      const uniqueCategories = Array.from(new Set(data?.map((item: Product) => item.category) || []));
+      return uniqueCategories;
     }
-  };
+  });
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setSelectedCategory('all');
-    setSortBy('featured');
-    setPriceRange('0-1000');
-    setMinRating('');
-    setSelectedTags([]);
-  };
+  const allAutomations = useMemo(() => {
+    return automations?.pages.flatMap(page => page.items) || [];
+  }, [automations]);
 
-  const applySavedFilters = (savedFilters: any) => {
-    if (savedFilters.search) setSearchTerm(savedFilters.search);
-    if (savedFilters.category) setSelectedCategory(savedFilters.category);
-    if (savedFilters.sortBy) setSortBy(savedFilters.sortBy);
-    if (savedFilters.price) setPriceRange(savedFilters.price);
-    if (savedFilters.rating) setMinRating(savedFilters.rating);
-    if (savedFilters.tags) setSelectedTags(savedFilters.tags);
-  };
-
-  if (isLoadingAutomations) {
-    return <LoadingState message="Loading automations..." />;
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse space-y-8">
+          <div className="h-12 bg-gray-200 rounded w-1/3" />
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-64 bg-gray-200 rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <SearchBar value={searchTerm} onChange={setSearchTerm} />
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className="whitespace-nowrap"
-          >
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-4">Browse Automations</h1>
+          <p className="text-gray-600">Discover powerful automation tools to streamline your workflow</p>
         </div>
 
-        {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 border rounded-lg bg-card">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Categories</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-muted-foreground"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Clear All
-                </Button>
-              </div>
-              <CategoryFilter value={selectedCategory} onChange={setSelectedCategory} />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Price & Rating</h3>
-              <PriceRangeFilter value={priceRange} onChange={setPriceRange} />
-              <RatingFilter value={minRating} onChange={setMinRating} />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Tags & Sort</h3>
-              <TagsFilter value={selectedTags} onChange={setSelectedTags} />
-              <SortFilter value={sortBy} onChange={setSortBy} />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Saved Filters</h3>
-              <SavedFilters
-                currentFilters={{
-                  search: searchTerm,
-                  category: selectedCategory,
-                  sortBy,
-                  price: priceRange,
-                  rating: minRating,
-                  tags: selectedTags,
-                }}
-                onApplyFilters={applySavedFilters}
+        {/* Search and Filters */}
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <SearchBar
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Search automations..."
               />
             </div>
-          </div>
-        )}
-      </div>
-
-      <div
-        ref={parentRef}
-        className="h-[calc(100vh-200px)] overflow-auto"
-        style={{
-          contain: 'strict',
-        }}
-      >
-        <div
-          style={{
-            height: `${rowVirtualizer.getTotalSize()}px`,
-            width: '100%',
-            position: 'relative',
-          }}
-        >
-          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const automation = automations[virtualRow.index];
-            return (
-              <div
-                key={virtualRow.index}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
+            <div className="flex gap-2">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Categories</SelectItem>
+                  {categories?.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="popularity">Most Popular</SelectItem>
+                  <SelectItem value="price">Price</SelectItem>
+                  <SelectItem value="rating">Rating</SelectItem>
+                  <SelectItem value="latest">Latest</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
               >
-                <AutomationCard automation={automation} onPurchase={handlePurchase} />
-              </div>
-            );
-          })}
+                {viewMode === 'grid' ? <List /> : <Grid />}
+              </Button>
+            </div>
+          </div>
         </div>
-        <div ref={loadMoreRef} className="h-4" />
-      </div>
 
-      {isFetchingNextPage && (
-        <div className="flex justify-center mt-4">
-          <LoadingState message="Loading more..." />
+        {/* Results */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <p className="text-gray-600">
+              {allAutomations.length} automation{allAutomations.length !== 1 ? 's' : ''} found
+            </p>
+          </div>
+
+          {/* Automation Grid */}
+          <div className={`grid gap-6 ${
+            viewMode === 'grid' 
+              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+              : 'grid-cols-1'
+          }`}>
+            {allAutomations.map((automation: ExtendedProduct) => (
+              <motion.div
+                key={automation.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                  <CardHeader className="p-0">
+                    <div className="aspect-video relative overflow-hidden rounded-t-lg">
+                      <OptimizedImage
+                        src={automation.image_urls?.[0] || '/placeholder.png'}
+                        alt={automation.title}
+                        width={400}
+                        height={225}
+                        quality={80}
+                        className="object-cover w-full h-full"
+                        placeholder="blur"
+                      />
+                      {automation.featured && (
+                        <Badge className="absolute top-2 left-2 bg-yellow-500">
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div>
+                        <h3 className="font-semibold text-lg line-clamp-2">{automation.title}</h3>
+                        <p className="text-gray-600 text-sm line-clamp-2">{automation.description}</p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Badge variant="secondary">{automation.category}</Badge>
+                        <div className="text-lg font-bold text-primary">
+                          ${automation.price.toFixed(2)}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <span>⭐</span>
+                          <span>{automation.rating?.toFixed(1) || '0.0'}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span>📥</span>
+                          <span>{automation.download_count}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Load More */}
+          {hasNextPage && (
+            <div className="text-center">
+              <Button onClick={() => fetchNextPage()} variant="outline">
+                Load More
+              </Button>
+            </div>
+          )}
+
+          {allAutomations.length === 0 && !isLoading && (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No automations found matching your criteria.</p>
+            </div>
+          )}
         </div>
-      )}
+      </motion.div>
     </div>
   );
-};
-
-export default Browse;
+}

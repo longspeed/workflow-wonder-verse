@@ -12,6 +12,7 @@ export interface AutomationFilters {
 export interface Automation {
   id: string;
   title: string;
+  name: string; // Added missing name property
   description: string;
   category: string;
   price: number;

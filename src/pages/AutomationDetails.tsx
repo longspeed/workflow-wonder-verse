@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { Star, Download, User, Heart, Share2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { automationService, productService } from '@/services/supabase';
 import { useRealTimeManager } from '@/hooks/useRealTimeManager';
 import { cn } from '@/lib/utils';
+import type { Database } from '@/integrations/supabase/types';
+
+type Product = Database['public']['Tables']['products']['Row'];
 
 export default function AutomationDetails() {
   const { id } = useParams<{ id: string }>();
@@ -32,7 +35,7 @@ export default function AutomationDetails() {
     enabled: !!id,
   });
 
-  const automation = automationResponse?.data;
+  const automation = automationResponse?.data as Product | null;
 
   // Real-time updates
   useRealTimeManager({
@@ -47,12 +50,12 @@ export default function AutomationDetails() {
   const { mutate: purchaseAutomation, isPending: isPurchasing } = useMutation({
     mutationFn: () => productService.purchaseAutomation(id!, user!.id),
     onSuccess: () => {
-      toast('Automation purchased successfully!');
+      toast({ title: 'Success', description: 'Automation purchased successfully!' });
       setShowPurchaseModal(false);
       navigate('/dashboard');
     },
     onError: (error) => {
-      toast('Failed to purchase automation. Please try again.');
+      toast({ title: 'Error', description: 'Failed to purchase automation. Please try again.' });
     },
   });
 
@@ -61,7 +64,10 @@ export default function AutomationDetails() {
     mutationFn: () => productService.toggleFavorite(id!, user!.id),
     onSuccess: () => {
       setIsFavorite(!isFavorite);
-      toast(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+      toast({ 
+        title: 'Success', 
+        description: isFavorite ? 'Removed from favorites' : 'Added to favorites' 
+      });
     },
   });
 
