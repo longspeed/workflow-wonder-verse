@@ -1,3 +1,4 @@
+
 import { PostgrestError } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/react';
 import { BrowserTracing } from '@sentry/tracing';
@@ -249,4 +250,4 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
     return this.props.children;
   }
-} 
+}

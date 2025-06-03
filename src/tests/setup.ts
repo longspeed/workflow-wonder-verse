@@ -1,12 +1,14 @@
+
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
-import { afterEach } from 'vitest';
+import { afterEach, beforeAll, afterAll } from 'vitest';
 import { setupServer } from 'msw/node';
 import { rest } from 'msw';
 import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
+import React from 'react';
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
@@ -133,10 +135,10 @@ expect.extend({
       };
     }
   },
-  toHaveStyleRule(received, property, value) {
+  toHaveStyleRule(received: any, property: string, value: string) {
     const element = received;
     const computedStyle = window.getComputedStyle(element);
-    const actualValue = computedStyle[property];
+    const actualValue = (computedStyle as any)[property];
     
     return {
       message: () =>
@@ -200,4 +202,4 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
-}); 
+});

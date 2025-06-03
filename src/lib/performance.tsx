@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import * as Sentry from '@sentry/react';
 
@@ -64,8 +65,8 @@ class PerformanceMonitor {
     });
 
     // Report to analytics
-    if (window.gtag) {
-      window.gtag('event', 'performance_metric', {
+    if ((window as any).gtag) {
+      (window as any).gtag('event', 'performance_metric', {
         metric_name: name,
         metric_value: value,
       });
@@ -209,4 +210,4 @@ export const useResourceLoadingMonitoring = () => {
     observer.observe({ entryTypes: ['resource'] });
     return () => observer.disconnect();
   }, []);
-}; 
+};
