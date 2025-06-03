@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Bell, X } from 'lucide-react';
@@ -31,7 +30,6 @@ export function RealTimeNotification({
   // Subscribe to real-time notifications
   useRealTimeManager({
     channel: 'notifications',
-    filter: `user_id=eq.${userId}`,
     onUpdate: (payload) => {
       const newNotification: Notification = {
         id: payload.new.id,

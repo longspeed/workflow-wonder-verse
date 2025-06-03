@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -40,7 +41,14 @@ const toastVariants = cva(
   }
 )
 
-const Toast = ({ message, type = "info", onClose, duration = 3000 }: ToastProps) => {
+interface SimpleToastProps {
+  message: string;
+  type?: "info" | "success" | "error" | "warning";
+  onClose: () => void;
+  duration?: number;
+}
+
+const SimpleToast = ({ message, type = "info", onClose, duration = 3000 }: SimpleToastProps) => {
   React.useEffect(() => {
     const timer = setTimeout(onClose, duration)
     return () => clearTimeout(timer)
@@ -140,16 +148,13 @@ const ToastDescription = React.forwardRef<
 ))
 ToastDescription.displayName = ToastPrimitives.Description.displayName
 
-type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
-
 type ToastActionElement = React.ReactElement<typeof ToastAction>
 
 export {
-  type ToastProps,
   type ToastActionElement,
   ToastProvider,
   ToastViewport,
-  Toast,
+  SimpleToast as Toast,
   ToastTitle,
   ToastDescription,
   ToastClose,

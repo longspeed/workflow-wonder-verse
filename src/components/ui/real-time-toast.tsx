@@ -14,13 +14,11 @@ interface ToastMessage {
 interface RealTimeToastProps {
   userId?: string;
   channel?: string;
-  filter?: string;
 }
 
 export function RealTimeToast({ 
   userId, 
-  channel = 'toast-messages',
-  filter 
+  channel = 'toast-messages'
 }: RealTimeToastProps) {
   const showToast = useCallback((toastData: ToastMessage) => {
     const toastOptions = {
@@ -48,7 +46,6 @@ export function RealTimeToast({
   // Subscribe to real-time toast messages
   useRealTimeManager({
     channel,
-    filter: filter || (userId ? `user_id=eq.${userId}` : undefined),
     onUpdate: (payload) => {
       if (payload.new && payload.new.type && payload.new.message) {
         showToast(payload.new as ToastMessage);

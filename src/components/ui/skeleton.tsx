@@ -1,12 +1,6 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
-
-interface SkeletonProps {
-  className?: string;
-  variant?: 'text' | 'circle' | 'rect';
-  width?: string | number;
-  height?: string | number;
-}
 
 function Skeleton({
   className,
@@ -24,9 +18,9 @@ export { Skeleton }
 
 export const SkeletonCard: React.FC<{ className?: string }> = ({ className }) => (
   <div className={cn('p-4 space-y-3', className)}>
-    <Skeleton variant="text" width="60%" />
-    <Skeleton variant="text" width="80%" />
-    <Skeleton variant="text" width="40%" />
+    <Skeleton className="h-4 w-3/5" />
+    <Skeleton className="h-4 w-4/5" />
+    <Skeleton className="h-4 w-2/5" />
   </div>
 );
 

@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy, memo } from 'react';
 import { useInView } from 'react-intersection-observer';
 
@@ -16,7 +17,12 @@ export const LazyLoad = ({ children, threshold = 0.1 }) => {
 };
 
 // Image optimization component
-export const OptimizedImage = memo(({ src, alt, ...props }) => {
+interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  src: string;
+  alt: string;
+}
+
+export const OptimizedImage = memo(({ src, alt, ...props }: OptimizedImageProps) => {
   const [isLoaded, setIsLoaded] = React.useState(false);
 
   return (
@@ -85,4 +91,4 @@ export const CodeSplit = ({ importFn, fallback = null }) => {
       <Component />
     </Suspense>
   );
-}; 
+};

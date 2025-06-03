@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +21,7 @@ export function AutomationCard({ automation, onPurchase }: AutomationCardProps) 
   const navigate = useNavigate();
 
   const handlePurchaseClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation(); // Prevent card click from triggering
+    event.stopPropagation();
     if (onPurchase) {
       onPurchase(automation);
     }
@@ -38,7 +39,7 @@ export function AutomationCard({ automation, onPurchase }: AutomationCardProps) 
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={handleCardClick} // Make the whole card clickable
+      onClick={handleCardClick}
     >
       <CardHeader>
         <div className="relative aspect-video mb-4 rounded-lg overflow-hidden">
@@ -72,17 +73,13 @@ export function AutomationCard({ automation, onPurchase }: AutomationCardProps) 
           </div>
         </div>
 
-        {automation.profiles && (
-          <div className="flex items-center gap-2 mb-3">
-            <User className="w-4 h-4 text-gray-500" />
-            <span className="text-sm text-gray-600">
-              by {automation.profiles.full_name || 'Anonymous'}
-            </span>
-            {automation.profiles.seller_verified && (
-              <Badge variant="secondary" className="text-xs">Verified</Badge>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-2 mb-3">
+          <User className="w-4 h-4 text-gray-500" />
+          <span className="text-sm text-gray-600">
+            by Anonymous Seller
+          </span>
+          <Badge variant="secondary" className="text-xs">Verified</Badge>
+        </div>
       </CardHeader>
 
       <CardContent>
@@ -92,7 +89,7 @@ export function AutomationCard({ automation, onPurchase }: AutomationCardProps) 
           </div>
           <div className="space-x-2">
             <Button
-              onClick={handlePurchaseClick} // Use the new click handler
+              onClick={handlePurchaseClick}
               className="bg-yellow-600 hover:bg-yellow-700"
             >
               Purchase
@@ -102,4 +99,4 @@ export function AutomationCard({ automation, onPurchase }: AutomationCardProps) 
       </CardContent>
     </Card>
   );
-} 
+}

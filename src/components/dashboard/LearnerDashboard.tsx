@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, Clock, Award, Play, Calendar, TrendingUp, ChevronRight, BarChart2, Target, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -139,14 +138,6 @@ const LearnerDashboard = () => {
     weeklyProgress: 3,
   }), []);
 
-  const parentRef = React.useRef<HTMLDivElement>(null);
-  const rowVirtualizer = useVirtualizer({
-    count: enrolledCourses.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 150,
-    overscan: 5,
-  });
-
   return (
     <div className={cn(
       "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8",
@@ -184,73 +175,53 @@ const LearnerDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div ref={parentRef} className="h-[600px] overflow-auto">
-                  <div
-                    style={{
-                      height: `${rowVirtualizer.getTotalSize()}px`,
-                      width: '100%',
-                      position: 'relative',
-                    }}
-                  >
-                    {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                      const course = enrolledCourses[virtualRow.index];
-                      return (
-                        <motion.div
-                          key={course.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: virtualRow.index * 0.1 }}
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: `${virtualRow.size}px`,
-                            transform: `translateY(${virtualRow.start}px)`,
-                          }}
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {enrolledCourses.map((course, index) => (
+                    <motion.div
+                      key={course.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="p-4 bg-yellow-50 dark:bg-gray-700 rounded-lg"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-medium text-yellow-900 dark:text-yellow-400">
+                            {course.title}
+                          </h4>
+                          <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                            by {course.instructor}
+                          </p>
+                          <Badge variant="secondary" className="mt-1">
+                            {course.category}
+                          </Badge>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-white"
                         >
-                          <div className="p-4 bg-yellow-50 dark:bg-gray-700 rounded-lg m-2">
-                            <div className="flex items-start justify-between mb-3">
-                              <div>
-                                <h4 className="font-medium text-yellow-900 dark:text-yellow-400">
-                                  {course.title}
-                                </h4>
-                                <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                                  by {course.instructor}
-                                </p>
-                                <Badge variant="secondary" className="mt-1">
-                                  {course.category}
-                                </Badge>
-                              </div>
-                              <Button 
-                                size="sm" 
-                                className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-white"
-                              >
-                                <Play className="h-4 w-4 mr-1" />
-                                Continue
-                              </Button>
-                            </div>
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-yellow-700 dark:text-yellow-300">Progress</span>
-                                <span className="font-medium text-yellow-900 dark:text-yellow-400">
-                                  {course.progress}%
-                                </span>
-                              </div>
-                              <Progress value={course.progress} className="h-2" />
-                              <div className="flex justify-between text-sm text-yellow-700 dark:text-yellow-300">
-                                <span>Next: {course.nextLesson}</span>
-                                <span>{course.timeLeft}</span>
-                              </div>
-                              <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                                Last accessed: {course.lastAccessed}
-                              </p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
+                          <Play className="h-4 w-4 mr-1" />
+                          Continue
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-yellow-700 dark:text-yellow-300">Progress</span>
+                          <span className="font-medium text-yellow-900 dark:text-yellow-400">
+                            {course.progress}%
+                          </span>
+                        </div>
+                        <Progress value={course.progress} className="h-2" />
+                        <div className="flex justify-between text-sm text-yellow-700 dark:text-yellow-300">
+                          <span>Next: {course.nextLesson}</span>
+                          <span>{course.timeLeft}</span>
+                        </div>
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                          Last accessed: {course.lastAccessed}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
