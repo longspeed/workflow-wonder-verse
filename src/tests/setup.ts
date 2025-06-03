@@ -72,20 +72,16 @@ const createTestQueryClient = () => new QueryClient({
 // Custom render function that includes providers
 export function renderWithProviders(
   ui: React.ReactElement,
-  {
-    route = '/',
-    ...renderOptions
-  } = {}
+  options: { route?: string } = {}
 ) {
+  const { route = '/', ...renderOptions } = options;
   const testQueryClient = createTestQueryClient();
   
   function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <QueryClientProvider client={testQueryClient}>
-        <BrowserRouter>
-          {children}
-        </BrowserRouter>
-      </QueryClientProvider>
+    return React.createElement(
+      QueryClientProvider,
+      { client: testQueryClient },
+      React.createElement(BrowserRouter, null, children)
     );
   }
 
