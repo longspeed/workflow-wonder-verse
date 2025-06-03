@@ -28,9 +28,9 @@ export const useAccountData = () => {
       const profileData = await profileService.getProfile(user.id);
       setProfile(profileData?.data || null);
 
-      // Fetch user's automations
-      const { data: automationsData } = await automationService.getAutomations();
-      setAutomations(automationsData || []);
+      // Fetch user's products (automations)
+      const { data: productsData } = await automationService.getAutomations();
+      setAutomations(productsData || []);
     } catch (err) {
       console.error('Error fetching account data:', err);
       setError(err instanceof Error ? err : new Error('Unknown error occurred'));

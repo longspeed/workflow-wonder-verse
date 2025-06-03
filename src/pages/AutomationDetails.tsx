@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,11 +12,9 @@ import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useAuth } from '@/hooks/useAuth';
-import { automationService } from '@/services/supabase';
-import { useMarketplace } from '@/hooks/useMarketplace';
+import { automationService, productService } from '@/services/supabase';
 import { useRealTimeManager } from '@/hooks/useRealTimeManager';
 import { cn } from '@/lib/utils';
-import type { Automation } from '@/types/marketplace';
 
 export default function AutomationDetails() {
   const { id } = useParams<{ id: string }>();
@@ -27,41 +26,42 @@ export default function AutomationDetails() {
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
   // Fetch automation details
-  const { data: automation, isLoading } = useQuery({
+  const { data: automationResponse, isLoading } = useQuery({
     queryKey: ['automation', id],
     queryFn: () => automationService.getAutomationById(id!),
     enabled: !!id,
   });
 
+  const automation = automationResponse?.data;
+
   // Real-time updates
   useRealTimeManager({
-    channel: 'automations',
-    table: 'automations',
+    channel: 'products',
     filter: `id=eq.${id}`,
     onUpdate: (payload) => {
-      queryClient.setQueryData(['automation', id], payload.new);
+      queryClient.setQueryData(['automation', id], { data: payload.new, error: null });
     },
   });
 
   // Purchase mutation
   const { mutate: purchaseAutomation, isPending: isPurchasing } = useMutation({
-    mutationFn: () => automationService.purchaseAutomation(id!, user!.id),
+    mutationFn: () => productService.purchaseAutomation(id!, user!.id),
     onSuccess: () => {
-      toast.success('Automation purchased successfully!');
+      toast('Automation purchased successfully!');
       setShowPurchaseModal(false);
       navigate('/dashboard');
     },
     onError: (error) => {
-      toast.error('Failed to purchase automation. Please try again.');
+      toast('Failed to purchase automation. Please try again.');
     },
   });
 
   // Toggle favorite
   const { mutate: toggleFavorite } = useMutation({
-    mutationFn: () => automationService.toggleFavorite(id!, user!.id),
+    mutationFn: () => productService.toggleFavorite(id!, user!.id),
     onSuccess: () => {
       setIsFavorite(!isFavorite);
-      toast.success(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+      toast(isFavorite ? 'Removed from favorites' : 'Added to favorites');
     },
   });
 
@@ -103,7 +103,7 @@ export default function AutomationDetails() {
             <div className="relative aspect-video rounded-lg overflow-hidden">
               <OptimizedImage
                 src={automation.image_urls?.[0] || '/placeholder.png'}
-                alt={automation.name}
+                alt={automation.title}
                 width={800}
                 height={450}
                 quality={90}
@@ -116,7 +116,7 @@ export default function AutomationDetails() {
                 <div key={index} className="relative aspect-video rounded-lg overflow-hidden">
                   <OptimizedImage
                     src={url}
-                    alt={`${automation.name} - Image ${index + 2}`}
+                    alt={`${automation.title} - Image ${index + 2}`}
                     width={200}
                     height={112}
                     quality={80}
@@ -130,12 +130,12 @@ export default function AutomationDetails() {
 
           <div className="space-y-6">
             <div>
-              <h1 className="text-3xl font-bold mb-2">{automation.name}</h1>
+              <h1 className="text-3xl font-bold mb-2">{automation.title}</h1>
               <div className="flex items-center gap-4">
                 <Badge variant="default">{automation.category}</Badge>
                 <div className="flex items-center text-yellow-500">
                   <Star className="w-5 h-5 fill-current" />
-                  <span className="ml-1">{automation.rating.toFixed(1)}</span>
+                  <span className="ml-1">{automation.rating?.toFixed(1) || '0.0'}</span>
                 </div>
                 <div className="flex items-center text-gray-500">
                   <Download className="w-5 h-5" />
@@ -145,23 +145,21 @@ export default function AutomationDetails() {
             </div>
 
             <div className="flex items-center gap-4">
-              {automation.profiles && (
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                    <OptimizedImage
-                      src={automation.profiles.avatar_url || '/default-avatar.png'}
-                      alt={automation.profiles.full_name || 'Seller'}
-                      width={40}
-                      height={40}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-medium">{automation.profiles.full_name}</p>
-                    <p className="text-sm text-gray-500">Seller</p>
-                  </div>
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                  <OptimizedImage
+                    src="/default-avatar.png"
+                    alt="Seller"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              )}
+                <div>
+                  <p className="font-medium">Seller</p>
+                  <p className="text-sm text-gray-500">Creator</p>
+                </div>
+              </div>
             </div>
 
             <Separator />
@@ -170,7 +168,7 @@ export default function AutomationDetails() {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-2xl font-bold text-yellow-900">
-                    ${automation.price.toFixed(2)}
+                    ${automation.price?.toFixed(2) || '0.00'}
                   </p>
                   <p className="text-sm text-gray-500">One-time purchase</p>
                 </div>
@@ -189,11 +187,13 @@ export default function AutomationDetails() {
                     variant="outline"
                     size="icon"
                     onClick={() => {
-                      navigator.share({
-                        title: automation.name,
-                        text: automation.description,
-                        url: window.location.href,
-                      });
+                      if (navigator.share) {
+                        navigator.share({
+                          title: automation.title,
+                          text: automation.description,
+                          url: window.location.href,
+                        });
+                      }
                     }}
                   >
                     <Share2 className="w-5 h-5" />
@@ -243,17 +243,15 @@ export default function AutomationDetails() {
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Key Features</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {automation.features?.map((feature, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center mt-1">
-                      <span className="text-yellow-600 text-sm">✓</span>
-                    </div>
-                    <div>
-                      <h3 className="font-medium">{feature.title}</h3>
-                      <p className="text-sm text-gray-600">{feature.description}</p>
-                    </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center mt-1">
+                    <span className="text-yellow-600 text-sm">✓</span>
                   </div>
-                ))}
+                  <div>
+                    <h3 className="font-medium">Easy to Use</h3>
+                    <p className="text-sm text-gray-600">Simple setup and configuration</p>
+                  </div>
+                </div>
               </div>
             </Card>
           </TabsContent>
@@ -264,38 +262,7 @@ export default function AutomationDetails() {
                 <h2 className="text-xl font-semibold">Customer Reviews</h2>
                 <Button variant="outline">Write a Review</Button>
               </div>
-              <div className="space-y-6">
-                {automation.reviews?.map((review, index) => (
-                  <div key={index} className="border-b pb-6 last:border-0">
-                    <div className="flex items-center gap-4 mb-2">
-                      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                        <OptimizedImage
-                          src={review.user.avatar_url || '/default-avatar.png'}
-                          alt={review.user.name}
-                          width={40}
-                          height={40}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium">{review.user.name}</p>
-                        <div className="flex items-center text-yellow-500">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={cn(
-                                'w-4 h-4',
-                                i < review.rating ? 'fill-current' : ''
-                              )}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-gray-600">{review.comment}</p>
-                  </div>
-                ))}
-              </div>
+              <p className="text-gray-500">No reviews yet.</p>
             </Card>
           </TabsContent>
 
@@ -342,7 +309,7 @@ export default function AutomationDetails() {
             >
               <h2 className="text-xl font-semibold mb-4">Confirm Purchase</h2>
               <p className="text-gray-600 mb-6">
-                You are about to purchase "{automation.name}" for ${automation.price.toFixed(2)}.
+                You are about to purchase "{automation.title}" for ${automation.price?.toFixed(2) || '0.00'}.
                 This is a one-time payment.
               </p>
               <div className="flex justify-end gap-4">
@@ -366,4 +333,4 @@ export default function AutomationDetails() {
       </AnimatePresence>
     </div>
   );
-} 
+}

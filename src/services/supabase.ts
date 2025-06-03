@@ -111,6 +111,91 @@ export const automationService = {
   }
 };
 
+export const productService = {
+  async getProducts() {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return { data, error: null };
+  },
+
+  async getProductById(id: string) {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return { data, error: null };
+  },
+
+  async createProduct(product: Omit<Database['public']['Tables']['products']['Row'], 'id' | 'created_at' | 'updated_at'>) {
+    const { data, error } = await supabase
+      .from('products')
+      .insert(product)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data, error: null };
+  },
+
+  async updateProduct(id: string, updates: Partial<Database['public']['Tables']['products']['Row']>) {
+    const { data, error } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data, error: null };
+  },
+
+  async deleteProduct(id: string) {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return { error: null };
+  },
+
+  async purchaseAutomation(productId: string, userId: string) {
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', productId)
+      .single();
+
+    if (productError) throw productError;
+    if (!product) throw new Error('Product not found');
+
+    const { data, error } = await supabase
+      .from('user_purchases')
+      .insert({
+        user_id: userId,
+        product_id: productId,
+        purchase_price: product.price
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async toggleFavorite(productId: string, userId: string) {
+    // Mock implementation since favorites table doesn't exist yet
+    return Promise.resolve({ productId, userId, isFavorite: true });
+  }
+};
+
 export const profileService = {
   async getProfile(userId: string) {
     const { data, error } = await supabase
