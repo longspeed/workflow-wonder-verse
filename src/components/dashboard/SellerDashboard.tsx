@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,13 +11,13 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { ErrorState } from '@/components/ui/error-state';
 import type { Database } from '@/integrations/supabase/types';
 
-type Product = Database['public']['Tables']['products']['Row'] & {
+type Automation = Database['public']['Tables']['products']['Row'] & {
   sales_count?: number;
 };
 
 const SellerDashboard = () => {
   const { user } = useAuth();
-  const { profile, products, loading, error, refresh } = useAccountData();
+  const { profile, automations, loading, error, refresh } = useAccountData();
   const [showAddModal, setShowAddModal] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const { toast } = useToast();
@@ -69,49 +70,49 @@ const SellerDashboard = () => {
     }
   };
 
-  const publishedProducts = products.filter(product => product.status === 'published');
+  const publishedAutomations = automations.filter(automation => automation.status === 'published');
 
   const stats = [
     {
       title: 'Total Revenue',
-      value: `$${publishedProducts.reduce((sum, p) => sum + (p.price || 0), 0).toLocaleString()}`,
+      value: `$${publishedAutomations.reduce((sum, p) => sum + (p.price || 0), 0).toLocaleString()}`,
       change: '+12.5%',
       icon: DollarSign,
       color: 'text-green-600',
     },
     {
       title: 'Active Listings',
-      value: publishedProducts.length.toString(),
-      change: `${publishedProducts.filter(p => p.status === 'published').length} published`,
+      value: publishedAutomations.length.toString(),
+      change: `${publishedAutomations.filter(p => p.status === 'published').length} published`,
       icon: Zap,
       color: 'text-blue-600',
     },
     {
       title: 'Average Rating',
-      value: publishedProducts.length > 0 
-        ? (publishedProducts.reduce((sum, p) => sum + (p.rating || 0), 0) / publishedProducts.length).toFixed(1)
+      value: publishedAutomations.length > 0 
+        ? (publishedAutomations.reduce((sum, p) => sum + (p.rating || 0), 0) / publishedAutomations.length).toFixed(1)
         : '0.0',
-      change: `${publishedProducts.length} products`,
+      change: `${publishedAutomations.length} automations`,
       icon: Star,
       color: 'text-yellow-600',
     },
     {
       title: 'Total Sales',
-      value: publishedProducts.reduce((sum, p) => sum + ((p as Product).sales_count || 0), 0).toString(),
+      value: publishedAutomations.reduce((sum, p) => sum + ((p as Automation).sales_count || 0), 0).toString(),
       change: '+18 today',
       icon: TrendingUp,
       color: 'text-purple-600',
     },
   ];
 
-  const topAutomations = publishedProducts
-    .sort((a, b) => ((b as Product).sales_count || 0) - ((a as Product).sales_count || 0))
+  const topAutomations = publishedAutomations
+    .sort((a, b) => ((b as Automation).sales_count || 0) - ((a as Automation).sales_count || 0))
     .slice(0, 3)
-    .map(product => ({
-      name: product.title,
-      sales: (product as Product).sales_count || 0,
-      revenue: `$${(product.price || 0) * ((product as Product).sales_count || 0)}`,
-      rating: product.rating || 0,
+    .map(automation => ({
+      name: automation.title,
+      sales: (automation as Automation).sales_count || 0,
+      revenue: `$${(automation.price || 0) * ((automation as Automation).sales_count || 0)}`,
+      rating: automation.rating || 0,
     }));
 
   if (loading) {

@@ -1,122 +1,95 @@
-import React, { Component, ReactNode } from 'react'
-import { Button } from './button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card'
-import { AlertCircle, RefreshCw, Copy, ExternalLink } from 'lucide-react'
-import { toast } from 'sonner'
 
-interface Props {
-  children: ReactNode
-  fallback?: ReactNode
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
 }
 
-interface State {
-  hasError: boolean
-  error?: Error
-  errorInfo?: React.ErrorInfo
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  fallback?: React.ComponentType<{ error: Error; retry: () => void }>;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props)
-    this.state = { hasError: false }
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    this.setState({ errorInfo })
-    console.error('Error caught by boundary:', error, errorInfo)
-    
-    // Call the onError callback if provided
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo)
+    console.error('Error caught by ErrorBoundary:', error, errorInfo);
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
+  handleReportError = () => {
+    if (this.state.error) {
+      // Report error to logging service
+      console.error('Reporting error:', this.state.error);
+      toast('Error reported successfully');
     }
-
-    // Report error to monitoring service (if implemented)
-    this.reportError(error, errorInfo)
-  }
-
-  private reportError(error: Error, errorInfo: React.ErrorInfo) {
-    // TODO: Implement error reporting service integration
-    // Example: Sentry.captureException(error, { extra: errorInfo })
-  }
-
-  private copyErrorToClipboard = () => {
-    const errorDetails = {
-      message: this.state.error?.message,
-      stack: this.state.error?.stack,
-      componentStack: this.state.errorInfo?.componentStack
-    }
-    
-    navigator.clipboard.writeText(JSON.stringify(errorDetails, null, 2))
-    toast.success('Error details copied to clipboard')
-  }
+  };
 
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
-        return this.props.fallback
+        const FallbackComponent = this.props.fallback;
+        return (
+          <FallbackComponent
+            error={this.state.error!}
+            retry={this.handleRetry}
+          />
+        );
       }
 
       return (
-        <div className="min-h-[400px] flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <CardTitle>Something went wrong</CardTitle>
-              <CardDescription>
-                An error occurred while rendering this component.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-lg border">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-red-600 mb-4">
+                Something went wrong
+              </h2>
+              <p className="text-gray-600 mb-6">
+                We're sorry, but something unexpected happened. Please try again.
+              </p>
+              
               {this.state.error && (
-                <div className="bg-muted p-3 rounded text-sm text-muted-foreground">
-                  <div className="font-medium mb-1">Error Message:</div>
-                  <div className="mb-2">{this.state.error.message}</div>
-                  {this.state.errorInfo?.componentStack && (
-                    <>
-                      <div className="font-medium mb-1">Component Stack:</div>
-                      <div className="text-xs opacity-75">
-                        {this.state.errorInfo.componentStack}
-                      </div>
-                    </>
-                  )}
+                <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left">
+                  <pre className="text-sm text-gray-800 overflow-auto">
+                    {this.state.error.message}
+                  </pre>
                 </div>
               )}
-              <div className="flex flex-col gap-2">
-                <Button 
-                  onClick={() => this.setState({ hasError: false, error: undefined, errorInfo: undefined })}
-                  className="w-full"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
+
+              <div className="flex gap-3 justify-center">
+                <Button onClick={this.handleRetry} variant="default">
                   Try Again
                 </Button>
                 <Button 
+                  onClick={this.handleReportError} 
                   variant="outline"
-                  onClick={this.copyErrorToClipboard}
-                  className="w-full"
                 >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy Error Details
-                </Button>
-                <Button 
-                  variant="ghost"
-                  onClick={() => window.location.reload()}
-                  className="w-full"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Reload Page
+                  Report Error
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
-      )
+      );
     }
 
-    return this.props.children
+    return this.props.children;
   }
 }

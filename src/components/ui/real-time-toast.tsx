@@ -1,90 +1,82 @@
 
-import React, { useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { CheckCircle, AlertCircle, Info, XCircle } from 'lucide-react';
+import { useRealTimeManager } from '@/hooks/useRealTimeManager';
+
+interface ToastMessage {
+  id: string;
+  type: 'success' | 'error' | 'info' | 'warning';
+  title: string;
+  message: string;
+  duration?: number;
+}
 
 interface RealTimeToastProps {
+  userId?: string;
   channel?: string;
-  table?: string;
-  event?: 'INSERT' | 'UPDATE' | 'DELETE';
-  onNotification?: (payload: any) => void;
+  filter?: string;
 }
 
 export function RealTimeToast({ 
-  channel = 'real-time-updates',
-  table = 'products',
-  event = 'INSERT',
-  onNotification
+  userId, 
+  channel = 'toast-messages',
+  filter 
 }: RealTimeToastProps) {
-  useEffect(() => {
-    const subscription = supabase
-      .channel(channel)
-      .on(
-        'postgres_changes' as any,
-        {
-          event,
-          schema: 'public',
-          table
-        },
-        (payload) => {
-          let message = '';
-          let icon = <Info className="w-4 h-4" />;
-          
-          switch (event) {
-            case 'INSERT':
-              message = `New ${table.slice(0, -1)} added`;
-              icon = <CheckCircle className="w-4 h-4 text-green-500" />;
-              break;
-            case 'UPDATE':
-              message = `${table.slice(0, -1)} updated`;
-              icon = <AlertCircle className="w-4 h-4 text-yellow-500" />;
-              break;
-            case 'DELETE':
-              message = `${table.slice(0, -1)} deleted`;
-              icon = <XCircle className="w-4 h-4 text-red-500" />;
-              break;
-          }
-
-          // Handle postgres_changes payload structure
-          const record = (payload as any)?.new || (payload as any)?.old || {};
-          const description = record?.title || record?.name || 'Real-time update received';
-
-          toast(message, {
-            description,
-            icon: icon,
-          });
-
-          if (onNotification) {
-            onNotification(payload);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
+  const showToast = useCallback((toastData: ToastMessage) => {
+    const toastOptions = {
+      duration: toastData.duration || 4000,
     };
-  }, [channel, table, event, onNotification]);
 
-  return null;
+    switch (toastData.type) {
+      case 'success':
+        toast(toastData.message, toastOptions);
+        break;
+      case 'error':
+        toast(toastData.message, toastOptions);
+        break;
+      case 'info':
+        toast(toastData.message, toastOptions);
+        break;
+      case 'warning':
+        toast(toastData.message, toastOptions);
+        break;
+      default:
+        toast(toastData.message, toastOptions);
+    }
+  }, []);
+
+  // Subscribe to real-time toast messages
+  useRealTimeManager({
+    channel,
+    filter: filter || (userId ? `user_id=eq.${userId}` : undefined),
+    onUpdate: (payload) => {
+      if (payload.new && payload.new.type && payload.new.message) {
+        showToast(payload.new as ToastMessage);
+      }
+    },
+    onInsert: (payload) => {
+      if (payload.new && payload.new.type && payload.new.message) {
+        showToast(payload.new as ToastMessage);
+      }
+    },
+  });
+
+  return null; // This component doesn't render anything
 }
 
-// Static utility methods for toast notifications
-export const RealTimeUpdateToast = {
-  updateReceived: () => {
-    toast.success('Update received', {
-      description: 'Data has been refreshed with latest changes'
-    });
-  },
-  connectionRestored: () => {
-    toast.success('Connection restored', {
-      description: 'Real-time updates are now active'
-    });
-  },
-  connectionLost: () => {
-    toast.error('Connection lost', {
-      description: 'Real-time updates are currently unavailable'
-    });
-  }
+// Utility functions for triggering toasts
+export const triggerSuccessToast = (message: string, title?: string) => {
+  toast(message);
+};
+
+export const triggerErrorToast = (message: string, title?: string) => {
+  toast(message);
+};
+
+export const triggerInfoToast = (message: string, title?: string) => {
+  toast(message);
+};
+
+export const triggerWarningToast = (message: string, title?: string) => {
+  toast(message);
 };
