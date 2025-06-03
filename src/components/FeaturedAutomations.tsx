@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { automationService } from '@/services/supabase';
 import { Button } from "@/components/ui/button"
@@ -15,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface AutomationWithProfile {
   id: string;
-  name: string;
+  title: string;
   description: string | null;
   price: number;
   currency: string | null;
@@ -52,7 +53,29 @@ const FeaturedAutomations = () => {
           return;
         }
 
-        setAutomations(data as AutomationWithProfile[] || []);
+        // Transform the data to match our interface
+        const transformedData = data?.map((item: any) => ({
+          id: item.id,
+          title: item.title || 'Untitled',
+          description: item.description,
+          price: item.price || 0,
+          currency: item.currency || 'USD',
+          rating: item.rating,
+          download_count: item.download_count,
+          category: item.category,
+          tags: item.tags,
+          image_urls: item.image_urls,
+          demo_url: item.demo_url,
+          documentation_url: item.documentation_url,
+          seller_id: item.seller_id,
+          status: item.status,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          featured: item.featured,
+          profiles: item.profiles
+        })) || [];
+
+        setAutomations(transformedData);
       } catch (error) {
         console.error('Error fetching featured automations:', error);
       }
@@ -63,7 +86,7 @@ const FeaturedAutomations = () => {
 
   const handlePurchase = (automation: AutomationWithProfile) => {
     if (user) {
-      alert(`Purchasing ${automation.name} for $${automation.price}`);
+      alert(`Purchasing ${automation.title} for $${automation.price}`);
     } else {
       alert('Please log in to purchase');
     }
@@ -87,11 +110,11 @@ const FeaturedAutomations = () => {
               <div className="relative aspect-video mb-4 rounded-lg overflow-hidden">
                  <img
                   src={automation.image_urls?.[0] || '/placeholder.png'}
-                  alt={automation.name}
+                  alt={automation.title}
                   className="rounded-md mb-4 w-full h-48 object-cover"
                  />
               </div>
-              <CardTitle>{automation.name}</CardTitle>
+              <CardTitle>{automation.title}</CardTitle>
               <CardDescription>{automation.description?.slice(0, 100)}...</CardDescription>
             </CardHeader>
             <CardContent>

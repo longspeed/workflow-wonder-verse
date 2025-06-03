@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -82,13 +83,13 @@ export function CreateAutomation() {
 
         if (!response.ok) {
           console.error('Webhook failed to send data:', response.status, response.statusText);
-          toast.warning('Automation created, but failed to notify webhook.');
+          toast('Automation created, but failed to notify webhook.');
         } else {
           console.log('Webhook successfully notified');
         }
       } catch (error) {
         console.error('Error sending data to webhook:', error);
-        toast.warning('Automation created, but encountered an error sending data to webhook.');
+        toast('Automation created, but encountered an error sending data to webhook.');
       }
 
       navigate('/dashboard/automations');
@@ -252,4 +253,4 @@ export function CreateAutomation() {
       </Card>
     </motion.div>
   );
-} 
+}
