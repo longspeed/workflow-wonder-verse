@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { Button } from '@/components/ui/button';
@@ -53,7 +54,7 @@ export const ImageUploader = ({
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     if (files.length > maxFiles) {
-      toast.error(`You can only upload up to ${maxFiles} files`);
+      toast(`You can only upload up to ${maxFiles} files`);
       return;
     }
     setSelectedFiles(files);
@@ -109,11 +110,11 @@ export const ImageUploader = ({
       if (successfulUploads.length > 0) {
         const urls = successfulUploads.map(r => r.publicUrl!);
         onUploadComplete?.(urls);
-        toast.success(`Successfully uploaded ${successfulUploads.length} images`);
+        toast(`Successfully uploaded ${successfulUploads.length} images`);
       }
 
       if (failedUploads.length > 0) {
-        toast.error(`Failed to upload ${failedUploads.length} images`);
+        toast(`Failed to upload ${failedUploads.length} images`);
       }
 
       setSelectedFiles([]);
@@ -122,7 +123,7 @@ export const ImageUploader = ({
       setFlip(0);
       resetAdjustments();
     } catch (err) {
-      toast.error('Upload failed');
+      toast('Upload failed');
     }
   };
 
@@ -285,4 +286,4 @@ export const ImageUploader = ({
       )}
     </div>
   );
-}; 
+};

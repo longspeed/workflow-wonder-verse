@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import {
   Card,
@@ -39,9 +40,9 @@ export function AutomationList({
     try {
       setDeletingId(id);
       await onDelete(id);
-      toast.success('Automation deleted successfully');
+      toast('Automation deleted successfully');
     } catch (error) {
-      toast.error('Failed to delete automation');
+      toast('Failed to delete automation');
     } finally {
       setDeletingId(null);
     }
@@ -100,4 +101,4 @@ export function AutomationList({
       ))}
     </div>
   );
-} 
+}
