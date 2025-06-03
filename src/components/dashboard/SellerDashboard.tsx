@@ -22,21 +22,23 @@ const SellerDashboard = () => {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const { toast } = useToast();
 
-  // Auto-refresh every 5 minutes
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        await refresh();
-        setLastUpdate(new Date());
-      } catch (error) {
-        console.error('Auto-refresh failed:', error);
-      }
-    }, 5 * 60 * 1000); // 5 minutes
-
-    return () => clearInterval(interval);
+  // Memoize the refresh function to prevent infinite re-renders
+  const stableRefresh = useCallback(async () => {
+    try {
+      await refresh();
+      setLastUpdate(new Date());
+    } catch (error) {
+      console.error('Auto-refresh failed:', error);
+    }
   }, [refresh]);
 
-  const handleRefresh = async () => {
+  // Auto-refresh every 5 minutes with stable dependencies
+  useEffect(() => {
+    const interval = setInterval(stableRefresh, 5 * 60 * 1000); // 5 minutes
+    return () => clearInterval(interval);
+  }, [stableRefresh]);
+
+  const handleRefresh = useCallback(async () => {
     try {
       await refresh();
       setLastUpdate(new Date());
@@ -51,9 +53,9 @@ const SellerDashboard = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [refresh, toast]);
 
-  const handleAddAutomationSuccess = async () => {
+  const handleAddAutomationSuccess = useCallback(async () => {
     try {
       await refresh();
       setLastUpdate(new Date());
@@ -68,11 +70,14 @@ const SellerDashboard = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [refresh, toast]);
 
-  const publishedAutomations = automations.filter(automation => automation.status === 'published');
+  const publishedAutomations = useMemo(() => 
+    automations.filter(automation => automation.status === 'published'), 
+    [automations]
+  );
 
-  const stats = [
+  const stats = useMemo(() => [
     {
       title: 'Total Revenue',
       value: `$${publishedAutomations.reduce((sum, p) => sum + (p.price || 0), 0).toLocaleString()}`,
@@ -103,17 +108,20 @@ const SellerDashboard = () => {
       icon: TrendingUp,
       color: 'text-purple-600',
     },
-  ];
+  ], [publishedAutomations]);
 
-  const topAutomations = publishedAutomations
-    .sort((a, b) => ((b as Automation).sales_count || 0) - ((a as Automation).sales_count || 0))
-    .slice(0, 3)
-    .map(automation => ({
-      name: automation.title,
-      sales: (automation as Automation).sales_count || 0,
-      revenue: `$${(automation.price || 0) * ((automation as Automation).sales_count || 0)}`,
-      rating: automation.rating || 0,
-    }));
+  const topAutomations = useMemo(() => 
+    publishedAutomations
+      .sort((a, b) => ((b as Automation).sales_count || 0) - ((a as Automation).sales_count || 0))
+      .slice(0, 3)
+      .map(automation => ({
+        name: automation.title,
+        sales: (automation as Automation).sales_count || 0,
+        revenue: `$${(automation.price || 0) * ((automation as Automation).sales_count || 0)}`,
+        rating: automation.rating || 0,
+      })), 
+    [publishedAutomations]
+  );
 
   if (loading) {
     return (
