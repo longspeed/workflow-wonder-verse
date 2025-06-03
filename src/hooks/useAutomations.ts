@@ -1,8 +1,9 @@
+
 import { automationService } from '@/services/supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/integrations/supabase/types';
 
-type Automation = Database['public']['Tables']['automations']['Row'];
+type Product = Database['public']['Tables']['products']['Row'];
 
 export const useAutomations = () => {
   const queryClient = useQueryClient();
@@ -20,7 +21,7 @@ export const useAutomations = () => {
   });
 
   const updateAutomation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Automation> }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Product> }) =>
       automationService.updateAutomation(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['automations'] });

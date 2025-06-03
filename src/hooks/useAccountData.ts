@@ -1,15 +1,16 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { automationService, profileService } from '@/services/supabase';
 import type { Database } from '@/integrations/supabase/types';
 
-type Automation = Database['public']['Tables']['automations']['Row'];
+type Product = Database['public']['Tables']['products']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
 export const useAccountData = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [automations, setAutomations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -25,7 +26,7 @@ export const useAccountData = () => {
     try {
       // Fetch user profile
       const profileData = await profileService.getProfile(user.id);
-      setProfile(profileData);
+      setProfile(profileData?.data || null);
 
       // Fetch user's automations
       const { data: automationsData } = await automationService.getAutomations();
@@ -42,7 +43,7 @@ export const useAccountData = () => {
     fetchData();
   };
 
-  const batchUpdateAutomationStatus = async (items: Automation[]): Promise<void[]> => {
+  const batchUpdateAutomationStatus = async (items: Product[]): Promise<void[]> => {
     const promises = items.map(async (automation) => {
       // Update automation status logic here
       return Promise.resolve();
