@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +27,7 @@ const categories = [
 ];
 
 export function CreateAutomation() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -108,7 +109,7 @@ export function CreateAutomation() {
         description: 'Your automation has been created successfully.'
       });
 
-      navigate('/dashboard');
+      router.push('/dashboard');
     } catch (error) {
       console.error('Error creating automation:', error);
       toast({
@@ -238,7 +239,7 @@ export function CreateAutomation() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate(-1)}
+              onClick={() => router.back()}
               disabled={loading}
             >
               Cancel

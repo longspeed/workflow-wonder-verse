@@ -1,6 +1,6 @@
-
 import React, { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { css } from '@emotion/react';
+import { breakpoints } from '../../styles/breakpoints';
 
 interface FlexProps {
   children: ReactNode;
@@ -8,60 +8,30 @@ interface FlexProps {
   justify?: 'start' | 'end' | 'center' | 'between' | 'around' | 'evenly';
   align?: 'start' | 'end' | 'center' | 'stretch' | 'baseline';
   wrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
-  gap?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  gap?: string;
   className?: string;
 }
 
-const getJustifyClass = (justify?: string) => {
+const getJustifyContent = (justify?: string) => {
   switch (justify) {
-    case 'start': return 'justify-start';
-    case 'end': return 'justify-end';
-    case 'center': return 'justify-center';
-    case 'between': return 'justify-between';
-    case 'around': return 'justify-around';
-    case 'evenly': return 'justify-evenly';
-    default: return 'justify-start';
+    case 'start': return 'flex-start';
+    case 'end': return 'flex-end';
+    case 'center': return 'center';
+    case 'between': return 'space-between';
+    case 'around': return 'space-around';
+    case 'evenly': return 'space-evenly';
+    default: return 'flex-start';
   }
 };
 
-const getAlignClass = (align?: string) => {
+const getAlignItems = (align?: string) => {
   switch (align) {
-    case 'start': return 'items-start';
-    case 'end': return 'items-end';
-    case 'center': return 'items-center';
-    case 'stretch': return 'items-stretch';
-    case 'baseline': return 'items-baseline';
-    default: return 'items-stretch';
-  }
-};
-
-const getDirectionClass = (direction?: string) => {
-  switch (direction) {
-    case 'row': return 'flex-row';
-    case 'column': return 'flex-col';
-    case 'row-reverse': return 'flex-row-reverse';
-    case 'column-reverse': return 'flex-col-reverse';
-    default: return 'flex-row';
-  }
-};
-
-const getWrapClass = (wrap?: string) => {
-  switch (wrap) {
-    case 'nowrap': return 'flex-nowrap';
-    case 'wrap': return 'flex-wrap';
-    case 'wrap-reverse': return 'flex-wrap-reverse';
-    default: return 'flex-nowrap';
-  }
-};
-
-const getGapClass = (gap?: string) => {
-  switch (gap) {
-    case 'none': return 'gap-0';
-    case 'sm': return 'gap-2';
-    case 'md': return 'gap-4';
-    case 'lg': return 'gap-6';
-    case 'xl': return 'gap-8';
-    default: return 'gap-0';
+    case 'start': return 'flex-start';
+    case 'end': return 'flex-end';
+    case 'center': return 'center';
+    case 'stretch': return 'stretch';
+    case 'baseline': return 'baseline';
+    default: return 'stretch';
   }
 };
 
@@ -71,21 +41,20 @@ export const Flex: React.FC<FlexProps> = ({
   justify = 'start',
   align = 'stretch',
   wrap = 'nowrap',
-  gap = 'none',
+  gap = '0',
   className = '',
 }) => {
-  const classes = cn(
-    'flex',
-    getDirectionClass(direction),
-    getJustifyClass(justify),
-    getAlignClass(align),
-    getWrapClass(wrap),
-    getGapClass(gap),
-    className
-  );
+  const styles = css`
+    display: flex;
+    flex-direction: ${direction};
+    justify-content: ${getJustifyContent(justify)};
+    align-items: ${getAlignItems(align)};
+    flex-wrap: ${wrap};
+    gap: ${gap};
+  `;
 
   return (
-    <div className={classes}>
+    <div className={className} css={styles}>
       {children}
     </div>
   );
@@ -102,13 +71,89 @@ interface ResponsiveFlexProps extends FlexProps {
 
 export const ResponsiveFlex: React.FC<ResponsiveFlexProps> = ({
   children,
-  className = '',
+  xs,
+  sm,
+  md,
+  lg,
+  xl,
+  '2xl': twoXl,
   ...baseProps
 }) => {
+  const styles = css`
+    ${baseProps && css`
+      display: flex;
+      flex-direction: ${baseProps.direction || 'row'};
+      justify-content: ${getJustifyContent(baseProps.justify)};
+      align-items: ${getAlignItems(baseProps.align)};
+      flex-wrap: ${baseProps.wrap || 'nowrap'};
+      gap: ${baseProps.gap || '0'};
+    `}
+
+    ${xs && css`
+      @media (min-width: ${breakpoints.xs}) {
+        flex-direction: ${xs.direction || baseProps.direction || 'row'};
+        justify-content: ${getJustifyContent(xs.justify || baseProps.justify)};
+        align-items: ${getAlignItems(xs.align || baseProps.align)};
+        flex-wrap: ${xs.wrap || baseProps.wrap || 'nowrap'};
+        gap: ${xs.gap || baseProps.gap || '0'};
+      }
+    `}
+
+    ${sm && css`
+      @media (min-width: ${breakpoints.sm}) {
+        flex-direction: ${sm.direction || xs?.direction || baseProps.direction || 'row'};
+        justify-content: ${getJustifyContent(sm.justify || xs?.justify || baseProps.justify)};
+        align-items: ${getAlignItems(sm.align || xs?.align || baseProps.align)};
+        flex-wrap: ${sm.wrap || xs?.wrap || baseProps.wrap || 'nowrap'};
+        gap: ${sm.gap || xs?.gap || baseProps.gap || '0'};
+      }
+    `}
+
+    ${md && css`
+      @media (min-width: ${breakpoints.md}) {
+        flex-direction: ${md.direction || sm?.direction || xs?.direction || baseProps.direction || 'row'};
+        justify-content: ${getJustifyContent(md.justify || sm?.justify || xs?.justify || baseProps.justify)};
+        align-items: ${getAlignItems(md.align || sm?.align || xs?.align || baseProps.align)};
+        flex-wrap: ${md.wrap || sm?.wrap || xs?.wrap || baseProps.wrap || 'nowrap'};
+        gap: ${md.gap || sm?.gap || xs?.gap || baseProps.gap || '0'};
+      }
+    `}
+
+    ${lg && css`
+      @media (min-width: ${breakpoints.lg}) {
+        flex-direction: ${lg.direction || md?.direction || sm?.direction || xs?.direction || baseProps.direction || 'row'};
+        justify-content: ${getJustifyContent(lg.justify || md?.justify || sm?.justify || xs?.justify || baseProps.justify)};
+        align-items: ${getAlignItems(lg.align || md?.align || sm?.align || xs?.align || baseProps.align)};
+        flex-wrap: ${lg.wrap || md?.wrap || sm?.wrap || xs?.wrap || baseProps.wrap || 'nowrap'};
+        gap: ${lg.gap || md?.gap || sm?.gap || xs?.gap || baseProps.gap || '0'};
+      }
+    `}
+
+    ${xl && css`
+      @media (min-width: ${breakpoints.xl}) {
+        flex-direction: ${xl.direction || lg?.direction || md?.direction || sm?.direction || xs?.direction || baseProps.direction || 'row'};
+        justify-content: ${getJustifyContent(xl.justify || lg?.justify || md?.justify || sm?.justify || xs?.justify || baseProps.justify)};
+        align-items: ${getAlignItems(xl.align || lg?.align || md?.align || sm?.align || xs?.align || baseProps.align)};
+        flex-wrap: ${xl.wrap || lg?.wrap || md?.wrap || sm?.wrap || xs?.wrap || baseProps.wrap || 'nowrap'};
+        gap: ${xl.gap || lg?.gap || md?.gap || sm?.gap || xs?.gap || baseProps.gap || '0'};
+      }
+    `}
+
+    ${twoXl && css`
+      @media (min-width: ${breakpoints['2xl']}) {
+        flex-direction: ${twoXl.direction || xl?.direction || lg?.direction || md?.direction || sm?.direction || xs?.direction || baseProps.direction || 'row'};
+        justify-content: ${getJustifyContent(twoXl.justify || xl?.justify || lg?.justify || md?.justify || sm?.justify || xs?.justify || baseProps.justify)};
+        align-items: ${getAlignItems(twoXl.align || xl?.align || lg?.align || md?.align || sm?.align || xs?.align || baseProps.align)};
+        flex-wrap: ${twoXl.wrap || xl?.wrap || lg?.wrap || md?.wrap || sm?.wrap || xs?.wrap || baseProps.wrap || 'nowrap'};
+        gap: ${twoXl.gap || xl?.gap || lg?.gap || md?.gap || sm?.gap || xs?.gap || baseProps.gap || '0'};
+      }
+    `}
+  `;
+
   return (
-    <Flex {...baseProps} className={className}>
+    <div className={baseProps.className} css={styles}>
       {children}
-    </Flex>
+    </div>
   );
 };
 
@@ -131,21 +176,14 @@ export const FlexItem: React.FC<FlexItemProps> = ({
   align = 'auto',
   className = '',
 }) => {
-  const growClass = grow > 0 ? `flex-grow-${grow}` : '';
-  const shrinkClass = shrink > 0 ? `flex-shrink-${shrink}` : 'flex-shrink-0';
-  const orderClass = order > 0 ? `order-${order}` : '';
-  const alignClass = align !== 'auto' ? `self-${align}` : '';
-
-  const classes = cn(
-    growClass,
-    shrinkClass,
-    orderClass,
-    alignClass,
-    className
-  );
+  const styles = css`
+    flex: ${grow} ${shrink} ${basis};
+    order: ${order};
+    align-self: ${align};
+  `;
 
   return (
-    <div className={classes} style={{ flexBasis: basis }}>
+    <div className={className} css={styles}>
       {children}
     </div>
   );
@@ -160,18 +198,17 @@ export const FlexContainer: React.FC<FlexContainerProps> = ({
   children,
   maxWidth = '1200px',
   padding = '1rem',
-  className = '',
   ...props
 }) => {
-  const classes = cn('mx-auto', className);
+  const styles = css`
+    max-width: ${maxWidth};
+    padding: ${padding};
+    margin: 0 auto;
+  `;
 
   return (
-    <ResponsiveFlex 
-      {...props} 
-      className={classes}
-      style={{ maxWidth, padding }}
-    >
+    <ResponsiveFlex {...props} className={props.className} css={styles}>
       {children}
     </ResponsiveFlex>
   );
-};
+}; 

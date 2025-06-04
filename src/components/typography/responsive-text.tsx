@@ -1,6 +1,6 @@
-
 import React, { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { css } from '@emotion/react';
+import { breakpoints } from '../../styles/breakpoints';
 
 interface ResponsiveTextProps {
   children: ReactNode;
@@ -12,46 +12,95 @@ interface ResponsiveTextProps {
   className?: string;
 }
 
-const getVariantClasses = (variant: string) => {
+const getFontSize = (variant: string) => {
   switch (variant) {
     case 'h1':
-      return 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold';
+      return {
+        xs: '2rem',
+        sm: '2.5rem',
+        md: '3rem',
+        lg: '3.5rem',
+        xl: '4rem'
+      };
     case 'h2':
-      return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold';
+      return {
+        xs: '1.75rem',
+        sm: '2rem',
+        md: '2.5rem',
+        lg: '3rem',
+        xl: '3.5rem'
+      };
     case 'h3':
-      return 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold';
+      return {
+        xs: '1.5rem',
+        sm: '1.75rem',
+        md: '2rem',
+        lg: '2.5rem',
+        xl: '3rem'
+      };
     case 'h4':
-      return 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-semibold';
+      return {
+        xs: '1.25rem',
+        sm: '1.5rem',
+        md: '1.75rem',
+        lg: '2rem',
+        xl: '2.5rem'
+      };
     case 'h5':
-      return 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-semibold';
+      return {
+        xs: '1.125rem',
+        sm: '1.25rem',
+        md: '1.5rem',
+        lg: '1.75rem',
+        xl: '2rem'
+      };
     case 'h6':
-      return 'text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-semibold';
+      return {
+        xs: '1rem',
+        sm: '1.125rem',
+        md: '1.25rem',
+        lg: '1.5rem',
+        xl: '1.75rem'
+      };
     case 'body':
-      return 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl';
+      return {
+        xs: '1rem',
+        sm: '1.125rem',
+        md: '1.25rem',
+        lg: '1.375rem',
+        xl: '1.5rem'
+      };
     case 'small':
-      return 'text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl';
+      return {
+        xs: '0.875rem',
+        sm: '0.9375rem',
+        md: '1rem',
+        lg: '1.125rem',
+        xl: '1.25rem'
+      };
     default:
-      return 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl';
+      return {
+        xs: '1rem',
+        sm: '1.125rem',
+        md: '1.25rem',
+        lg: '1.375rem',
+        xl: '1.5rem'
+      };
   }
 };
 
-const getWeightClass = (weight?: string) => {
+const getFontWeight = (weight?: string) => {
   switch (weight) {
-    case 'normal': return 'font-normal';
-    case 'medium': return 'font-medium';
-    case 'semibold': return 'font-semibold';
-    case 'bold': return 'font-bold';
-    default: return 'font-normal';
-  }
-};
-
-const getAlignClass = (align?: string) => {
-  switch (align) {
-    case 'left': return 'text-left';
-    case 'center': return 'text-center';
-    case 'right': return 'text-right';
-    case 'justify': return 'text-justify';
-    default: return 'text-left';
+    case 'normal':
+      return '400';
+    case 'medium':
+      return '500';
+    case 'semibold':
+      return '600';
+    case 'bold':
+      return '700';
+    default:
+      return '400';
   }
 };
 
@@ -64,19 +113,34 @@ export const ResponsiveText: React.FC<ResponsiveTextProps> = ({
   weight,
   className = '',
 }) => {
-  const Component = as || (variant.startsWith('h') ? variant : 'p') as keyof JSX.IntrinsicElements;
+  const fontSize = getFontSize(variant);
+  const styles = css`
+    font-size: ${fontSize.xs};
+    font-weight: ${getFontWeight(weight)};
+    text-align: ${align};
+    ${color && `color: ${color};`}
 
-  const classes = cn(
-    getVariantClasses(variant),
-    getWeightClass(weight),
-    getAlignClass(align),
-    className
-  );
+    @media (min-width: ${breakpoints.sm}) {
+      font-size: ${fontSize.sm};
+    }
 
-  const style = color ? { color } : undefined;
+    @media (min-width: ${breakpoints.md}) {
+      font-size: ${fontSize.md};
+    }
+
+    @media (min-width: ${breakpoints.lg}) {
+      font-size: ${fontSize.lg};
+    }
+
+    @media (min-width: ${breakpoints.xl}) {
+      font-size: ${fontSize.xl};
+    }
+  `;
+
+  const Component = as || (variant.startsWith('h') ? variant : 'p');
 
   return (
-    <Component className={classes} style={style}>
+    <Component className={className} css={styles}>
       {children}
     </Component>
   );
@@ -123,16 +187,13 @@ interface TextBlockProps extends Omit<ResponsiveTextProps, 'variant'> {
 
 export const TextBlock: React.FC<TextBlockProps> = ({
   maxWidth = '65ch',
-  className,
   ...props
 }) => {
-  return (
-    <Body 
-      {...props} 
-      className={cn('max-w-prose', className)}
-      style={{ maxWidth }}
-    />
-  );
+  const styles = css`
+    max-width: ${maxWidth};
+  `;
+
+  return <Body {...props} css={styles} />;
 };
 
 // Text gradient component
@@ -142,16 +203,16 @@ interface TextGradientProps extends Omit<ResponsiveTextProps, 'variant'> {
 
 export const TextGradient: React.FC<TextGradientProps> = ({
   gradient,
-  className,
   ...props
 }) => {
-  return (
-    <ResponsiveText 
-      {...props} 
-      className={cn('bg-gradient-to-r bg-clip-text text-transparent', className)}
-      style={{ backgroundImage: gradient }}
-    />
-  );
+  const styles = css`
+    background: ${gradient};
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  `;
+
+  return <ResponsiveText {...props} css={styles} />;
 };
 
 // Text truncate component
@@ -161,17 +222,14 @@ interface TextTruncateProps extends Omit<ResponsiveTextProps, 'variant'> {
 
 export const TextTruncate: React.FC<TextTruncateProps> = ({
   lines = 1,
-  className,
   ...props
 }) => {
-  const truncateClass = lines === 1 
-    ? 'truncate' 
-    : `line-clamp-${lines}`;
+  const styles = css`
+    display: -webkit-box;
+    -webkit-line-clamp: ${lines};
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  `;
 
-  return (
-    <ResponsiveText 
-      {...props} 
-      className={cn(truncateClass, className)}
-    />
-  );
-};
+  return <ResponsiveText {...props} css={styles} />;
+}; 
