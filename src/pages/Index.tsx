@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
@@ -11,15 +12,15 @@ import FeaturesSection from '@/components/FeaturesSection';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-white font-homepage">
+    <div className="min-h-screen bg-white dark:bg-gray-900 font-sans">
       <Header />
-      <main className="space-y-24">
+      <main className="space-y-20">
         <HeroSection />
         <IntegrationsSection />
-        <TestimonialsSection />
         <FeaturesSection />
         <CategoryGrid />
         <FeaturedAutomations />
+        <TestimonialsSection />
         <TrustIndicators />
       </main>
       <Footer />
